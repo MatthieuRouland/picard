@@ -24,14 +24,21 @@
 
 package picard.arrays.illumina;
 import org.apache.commons.io.IOUtils;
+import picard.PicardException;
 
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
 
 public class InfiniumEGTFile extends InfiniumDataFile {
     public static final String EXTENSION = "egt";
+
+    private static final int VALID_GENTRAIN_DATA_TYPE = 9;
+    private static final int INVALID_FILE_VERSION = 2;
 
     public int[] nAA;
     public int[] nAB;
@@ -55,6 +62,8 @@ public class InfiniumEGTFile extends InfiniumDataFile {
 
     public String manifestName;
 
+    public Map<String, Integer> rsNameToIndex;
+
 
     public InfiniumEGTFile(final File clusterFile) throws IOException {
         super(new DataInputStream(new FileInputStream(clusterFile)), false);
@@ -72,7 +81,7 @@ public class InfiniumEGTFile extends InfiniumDataFile {
 
     private void readFileData() throws IOException {
         final int version = parseInt();
-        if (version > 9) {
+        if (version > VALID_GENTRAIN_DATA_TYPE) {
             throw new IOException("Error. Cannot read file - unknown version " + version + " for gentrain data type");
         }
 
@@ -117,6 +126,9 @@ public class InfiniumEGTFile extends InfiniumDataFile {
         }
         for (int i = 0; i < numCodes; i++) {
             rsNames[i] = parseString();
+            if (rsNameToIndex.put(rsNames[i], i) != null) {
+                throw new PicardException("Non-unique rsName '" + rsNames[i] + "' found in cluster file");
+            }
         }
     }
 
@@ -141,6 +153,7 @@ public class InfiniumEGTFile extends InfiniumDataFile {
 
         totalScore = new float[numCodes];
         rsNames = new String[numCodes];
+        rsNameToIndex = new HashMap<>();
     }
 
     private void readHeaderData() throws IOException {
@@ -158,8 +171,8 @@ public class InfiniumEGTFile extends InfiniumDataFile {
         // skip isWGT
         skipBoolean();
 
-        if (getFileVersion() == 2) {
-            throw new IOException("Version 2 unsupported");
+        if (getFileVersion() == INVALID_FILE_VERSION) {
+            throw new IOException("Version '" + INVALID_FILE_VERSION + "' unsupported");
         }
         manifestName = parseString();
     }

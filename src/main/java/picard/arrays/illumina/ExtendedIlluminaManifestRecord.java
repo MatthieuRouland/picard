@@ -30,6 +30,7 @@ import htsjdk.samtools.reference.ReferenceSequenceFile;
 import htsjdk.samtools.util.Interval;
 import htsjdk.samtools.util.Log;
 import htsjdk.samtools.util.SequenceUtil;
+import htsjdk.tribble.annotation.Strand;
 import htsjdk.variant.variantcontext.Allele;
 import org.apache.commons.lang.StringUtils;
 import picard.PicardException;
@@ -138,7 +139,7 @@ public class ExtendedIlluminaManifestRecord extends IlluminaManifestRecord {
 
         final ReferenceSequenceFile refFile = referenceFilesMap.get(record.getMajorGenomeBuild());
 
-        Strand strand = Strand.INVALID;
+        Strand strand = Strand.NONE;
         if (!isBad()) {     // getStrand may flag a record as bad.
             strand = getStrand(record, refFile);
         }
@@ -425,7 +426,7 @@ public class ExtendedIlluminaManifestRecord extends IlluminaManifestRecord {
     }
 
     private Strand getStrand(final IlluminaManifestRecord record, final ReferenceSequenceFile refFile, final String probeSeq) {
-        Strand strand = Strand.INVALID;
+        Strand strand = Strand.NONE;
 
         final String reference = getSequenceAt(refFile, record.getChr(), record.getPosition() - probeSeq.length(), record.getPosition() - 1);
         final String reverseReference = SequenceUtil.reverseComplement(getSequenceAt(refFile, record.getChr(), record.getPosition() + 1, record.getPosition() + probeSeq.length()));

@@ -100,7 +100,7 @@ public class GtcToVcf extends CommandLineProgram {
 
     static final String USAGE_DETAILS =
             "<p>GtcToVcf takes an Illumina GTC file and converts it to a VCF file using several supporting files.</p>" +
-                    "<p>A GTC file is an abbreviation for Genotype Call file, a tab-delimited text file containing data about gene expression.</p>" +
+                    "<p>A GTC file is an Illumina-specific file containing called genotypes in AA/AB/BB format.</p>" +
                     "<p>A VCF, aka Variant Calling Format, is a text file for storing how a sequenced sample differs from the reference genome. " +
                     "<a href='http://software.broadinstitute.org/software/igv/book/export/html/184'></a></p>" +
                     "<p>The name of the INPUT must match the name of the EXTENDED_ILLUMINA_MANIFEST, sans file extensions.</p>" +
@@ -289,7 +289,7 @@ public class GtcToVcf extends CommandLineProgram {
         }
     }
 
-    Sex getFingerprintSex(final File file) {
+    private Sex getFingerprintSex(final File file) {
         if (file == null) {
             return Sex.Unknown;
         } else {
@@ -341,6 +341,10 @@ public class GtcToVcf extends CommandLineProgram {
             final String chr = record.getB37Chr();
             final Integer position = record.getB37Pos();
             final Integer endPosition = position + ref.length() - 1;
+            Integer egtIndex = egtFile.rsNameToIndex.get(record.getName());
+            if (egtIndex == null) {
+                throw new PicardException("Found no record in cluster file for manifest entry '" + record.getName() + "'");
+            }
 
             progress.record(chr, position);
 
@@ -382,29 +386,29 @@ public class GtcToVcf extends CommandLineProgram {
             builder.attribute(InfiniumVcfFields.ILLUMINA_POS, record.getPosition());
             builder.attribute(InfiniumVcfFields.ILLUMINA_BUILD, record.getGenomeBuild());
             builder.attribute(InfiniumVcfFields.SOURCE, record.getSource().replace(' ', '_'));
-            builder.attribute(InfiniumVcfFields.GC_SCORE, formatFloatForVcf(egtFile.totalScore[gtcIndex]));
-            builder.attribute(InfiniumVcfFields.N_AA, egtFile.nAA[gtcIndex]);
-            builder.attribute(InfiniumVcfFields.N_AB, egtFile.nAB[gtcIndex]);
-            builder.attribute(InfiniumVcfFields.N_BB, egtFile.nBB[gtcIndex]);
-            builder.attribute(InfiniumVcfFields.DEV_R_AA, formatFloatForVcf(egtFile.devRAA[gtcIndex]));
-            builder.attribute(InfiniumVcfFields.DEV_R_AB, formatFloatForVcf(egtFile.devRAB[gtcIndex]));
-            builder.attribute(InfiniumVcfFields.DEV_R_BB, formatFloatForVcf(egtFile.devRBB[gtcIndex]));
-            builder.attribute(InfiniumVcfFields.MEAN_R_AA, formatFloatForVcf(egtFile.meanRAA[gtcIndex]));
-            builder.attribute(InfiniumVcfFields.MEAN_R_AB, formatFloatForVcf(egtFile.meanRAB[gtcIndex]));
-            builder.attribute(InfiniumVcfFields.MEAN_R_BB, formatFloatForVcf(egtFile.meanRBB[gtcIndex]));
-            builder.attribute(InfiniumVcfFields.DEV_THETA_AA, formatFloatForVcf(egtFile.devThetaAA[gtcIndex]));
-            builder.attribute(InfiniumVcfFields.DEV_THETA_AB, formatFloatForVcf(egtFile.devThetaAB[gtcIndex]));
-            builder.attribute(InfiniumVcfFields.DEV_THETA_BB, formatFloatForVcf(egtFile.devThetaBB[gtcIndex]));
-            builder.attribute(InfiniumVcfFields.MEAN_THETA_AA, formatFloatForVcf(egtFile.meanThetaAA[gtcIndex]));
-            builder.attribute(InfiniumVcfFields.MEAN_THETA_AB, formatFloatForVcf(egtFile.meanThetaAB[gtcIndex]));
-            builder.attribute(InfiniumVcfFields.MEAN_THETA_BB, formatFloatForVcf(egtFile.meanThetaBB[gtcIndex]));
+            builder.attribute(InfiniumVcfFields.GC_SCORE, formatFloatForVcf(egtFile.totalScore[egtIndex]));
+            builder.attribute(InfiniumVcfFields.N_AA, egtFile.nAA[egtIndex]);
+            builder.attribute(InfiniumVcfFields.N_AB, egtFile.nAB[egtIndex]);
+            builder.attribute(InfiniumVcfFields.N_BB, egtFile.nBB[egtIndex]);
+            builder.attribute(InfiniumVcfFields.DEV_R_AA, formatFloatForVcf(egtFile.devRAA[egtIndex]));
+            builder.attribute(InfiniumVcfFields.DEV_R_AB, formatFloatForVcf(egtFile.devRAB[egtIndex]));
+            builder.attribute(InfiniumVcfFields.DEV_R_BB, formatFloatForVcf(egtFile.devRBB[egtIndex]));
+            builder.attribute(InfiniumVcfFields.MEAN_R_AA, formatFloatForVcf(egtFile.meanRAA[egtIndex]));
+            builder.attribute(InfiniumVcfFields.MEAN_R_AB, formatFloatForVcf(egtFile.meanRAB[egtIndex]));
+            builder.attribute(InfiniumVcfFields.MEAN_R_BB, formatFloatForVcf(egtFile.meanRBB[egtIndex]));
+            builder.attribute(InfiniumVcfFields.DEV_THETA_AA, formatFloatForVcf(egtFile.devThetaAA[egtIndex]));
+            builder.attribute(InfiniumVcfFields.DEV_THETA_AB, formatFloatForVcf(egtFile.devThetaAB[egtIndex]));
+            builder.attribute(InfiniumVcfFields.DEV_THETA_BB, formatFloatForVcf(egtFile.devThetaBB[egtIndex]));
+            builder.attribute(InfiniumVcfFields.MEAN_THETA_AA, formatFloatForVcf(egtFile.meanThetaAA[egtIndex]));
+            builder.attribute(InfiniumVcfFields.MEAN_THETA_AB, formatFloatForVcf(egtFile.meanThetaAB[egtIndex]));
+            builder.attribute(InfiniumVcfFields.MEAN_THETA_BB, formatFloatForVcf(egtFile.meanThetaBB[egtIndex]));
 
-            EuclideanValues aaVals = polarToEuclidean(egtFile.meanRAA[gtcIndex], egtFile.devRAA[gtcIndex],
-                    egtFile.meanThetaAA[gtcIndex], egtFile.devThetaAA[gtcIndex]);
-            EuclideanValues abVals = polarToEuclidean(egtFile.meanRAB[gtcIndex], egtFile.devRAB[gtcIndex],
-                    egtFile.meanThetaAB[gtcIndex], egtFile.devThetaAB[gtcIndex]);
-            EuclideanValues bbVals = polarToEuclidean(egtFile.meanRBB[gtcIndex], egtFile.devRBB[gtcIndex],
-                    egtFile.meanThetaBB[gtcIndex], egtFile.devThetaBB[gtcIndex]);
+            EuclideanValues aaVals = polarToEuclidean(egtFile.meanRAA[egtIndex], egtFile.devRAA[egtIndex],
+                    egtFile.meanThetaAA[egtIndex], egtFile.devThetaAA[egtIndex]);
+            EuclideanValues abVals = polarToEuclidean(egtFile.meanRAB[egtIndex], egtFile.devRAB[egtIndex],
+                    egtFile.meanThetaAB[egtIndex], egtFile.devThetaAB[egtIndex]);
+            EuclideanValues bbVals = polarToEuclidean(egtFile.meanRBB[egtIndex], egtFile.devRBB[egtIndex],
+                    egtFile.meanThetaBB[egtIndex], egtFile.devThetaBB[egtIndex]);
 
             builder.attribute(InfiniumVcfFields.DEV_X_AA, formatFloatForVcf(aaVals.devX));
             builder.attribute(InfiniumVcfFields.DEV_X_AB, formatFloatForVcf(abVals.devX));
@@ -418,8 +422,8 @@ public class GtcToVcf extends CommandLineProgram {
             builder.attribute(InfiniumVcfFields.MEAN_Y_AA, formatFloatForVcf(aaVals.meanY));
             builder.attribute(InfiniumVcfFields.MEAN_Y_AB, formatFloatForVcf(abVals.meanY));
             builder.attribute(InfiniumVcfFields.MEAN_Y_BB, formatFloatForVcf(bbVals.meanY));
-            if (zCallThresholds.containsKey(egtFile.rsNames[gtcIndex])) {
-                String[] zThresh = zCallThresholds.get(egtFile.rsNames[gtcIndex]);
+            if (zCallThresholds.containsKey(egtFile.rsNames[egtIndex])) {
+                String[] zThresh = zCallThresholds.get(egtFile.rsNames[egtIndex]);
                 builder.attribute(InfiniumVcfFields.ZTHRESH_X, zThresh[0]);
                 builder.attribute(InfiniumVcfFields.ZTHRESH_Y, zThresh[1]);
             }
@@ -427,7 +431,12 @@ public class GtcToVcf extends CommandLineProgram {
             if (StringUtils.isNotEmpty(rsid)) {
                 builder.attribute(InfiniumVcfFields.RS_ID, rsid);
             }
-
+            if (egtFile.totalScore[egtIndex] == 0.0) {
+                builder.filter(InfiniumVcfFields.ZEROED_OUT_ASSAY);
+                if (genotype.isCalled()) {
+                    throw new PicardException("Found a call on a zeroed out SNP!!");
+                }
+            }
             if (record.isDupe()) {
                 builder.filter(InfiniumVcfFields.DUPE);
             }
@@ -670,6 +679,7 @@ public class GtcToVcf extends CommandLineProgram {
         lines.add(new VCFFilterHeaderLine(InfiniumVcfFields.DUPE, "Duplicate assays position."));
         lines.add(new VCFFilterHeaderLine(InfiniumVcfFields.TRIALLELIC, "Tri-allelic assay."));
         lines.add(new VCFFilterHeaderLine(InfiniumVcfFields.FAIL_REF, "Assay failed to map to reference."));
+        lines.add(new VCFFilterHeaderLine(InfiniumVcfFields.ZEROED_OUT_ASSAY, "Assay Zeroed out (marked as uncallable) in the Illumina Cluster File"));
 
         final VCFHeader header = new VCFHeader(lines, Collections.singletonList(chipWellBarcode));
         header.setSequenceDictionary(dict);

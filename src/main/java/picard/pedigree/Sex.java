@@ -11,7 +11,10 @@ import java.util.stream.Stream;
  * Represents the sex of an individual.
  */
 public enum Sex {
-    Male(1, "M"), Female(2, "F"), Unknown(-9, "U"), Not_Reported(-10, "N");
+    Male(1, "M", "Male"),
+    Female(2, "F", "Female"),
+    Unknown(-9, "U", "Unknown"),
+    Not_Reported(-10, "N", "Not Reported");
 
     /** The integer code used when reading/writing ped files. */
     private final int code;
@@ -19,10 +22,14 @@ public enum Sex {
     /** The String symbol used when reading/writing vcf/gtc files */
     private final String symbol;
 
+    /** The String name when reporting */
+    private final String name;
+
     /** Private constructor that takes the pedigree code for sex. */
-    private Sex(final int code, final String symbol) {
+    private Sex(final int code, final String symbol, final String name) {
         this.code = code;
         this.symbol = symbol;
+        this.name = name;
     }
 
     /** Returns the code used to encode this sex in a ped/fam file. */
@@ -47,7 +54,7 @@ public enum Sex {
      */
     public static Sex fromString(String sexString) {
         final Predicate<Sex> match =
-                s -> sexString.equalsIgnoreCase(s.symbol)
+                s -> sexString.equalsIgnoreCase(s.name)
                         ||   sexString.equalsIgnoreCase(s.name());
         final List<Sex> genders = Stream.of(Sex.values()).filter(match).collect(Collectors.toList());
         if (genders.size() == 1) return genders.get(0);

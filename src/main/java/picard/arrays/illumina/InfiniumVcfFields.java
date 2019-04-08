@@ -117,6 +117,7 @@ public class InfiniumVcfFields {
     public static final String DUPE = "DUPE";
     public static final String FAIL_REF = "FAIL_REF";
     public static final String ZCALL_DIFF = "ZCALL_DIFF";
+    public static final String ZEROED_OUT_ASSAY = "ZEROED_OUT_ASSAY";
 
     public static String  getValueFromVcfOtherHeaderLine(final VCFHeader vcfHeader, final String keyName) {
         VCFHeaderLine otherHeaderLine = vcfHeader.getOtherHeaderLine(keyName);

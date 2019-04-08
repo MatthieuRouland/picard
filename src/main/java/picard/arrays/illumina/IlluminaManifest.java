@@ -132,7 +132,7 @@ public class IlluminaManifest  {
     private String descriptorFileName;
     private String assayFormat;
     private String dateManufactured;
-    private int lociCount;              // Note - I do not know what this number represents, it is more than the # of assays and > the length of the file
+    private int lociCount;
     private int numAssays;
 
     private String[] assayHeaderNames;
@@ -214,7 +214,7 @@ public class IlluminaManifest  {
         while (manifestFileParser.hasNext()) {
             final String[] row = manifestFileParser.next();
             headerContents.add(row);
-            final String tagName = row[0].trim();         // Remove trailing whitespace.  Stupid Illumina
+            final String tagName = row[0].trim();         // Remove trailing whitespace.
             switch (tagName) {
                 case "Descriptor File Name":
                     setDescriptorFileName(row[1]);
@@ -228,8 +228,7 @@ public class IlluminaManifest  {
                 case "Loci Count":
                     setLociCount(new Integer(row[1]));
                     inHeader = false;           // Need to end the header now or parser will blow up on next line
-                    // Note that this means that the header ends at this field which is
-                    // stupid.  Need to redo CsvInputParser, or change parsing.
+                                                // Note that this means that the header ends at this field
                     break;
             }
             if (!inHeader) {
