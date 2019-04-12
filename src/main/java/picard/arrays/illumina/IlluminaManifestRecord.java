@@ -34,10 +34,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * A class to represent a record (line) from an Illumina Manifest [Assay] block
- *
+ * A class to represent a record (line) from an Illumina Manifest [Assay] entry
  */
-
 public class IlluminaManifestRecord {
     private final String[] originalLine;        // A copy of the line from the original file
     private final int index;
@@ -76,6 +74,8 @@ public class IlluminaManifestRecord {
 
     private static final Set<String> indels = Stream.of("[D/I]", "[I/D]").collect(Collectors.toSet());
     private static final Set<String> ambiguousSnps = Stream.of("[A/T]", "[T/A]", "[G/C]", "[C/G]").collect(Collectors.toSet());
+
+    public static final String ILLUMINA_FLAGGED_BAD_CHR = "0";
 
     IlluminaManifestRecord(final Map<String, Integer> columnNameToIndex, final String[] line, final int index) {
         this.originalLine = line;

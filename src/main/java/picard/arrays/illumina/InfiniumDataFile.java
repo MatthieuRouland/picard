@@ -32,7 +32,10 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class InfiniumDataFile {
+/**
+ * A class to provide methods for accessing Illumina Infinium Data Files.
+ */
+abstract class InfiniumDataFile {
 
     private String identifier;
     private int numberOfEntries;

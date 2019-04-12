@@ -43,7 +43,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * A class to represent a record (line) from a Extended Illumina Manifest block
+ * A class to represent a record (line) from an Extended Illumina Manifest [Assay] entry
  */
 public class ExtendedIlluminaManifestRecord extends IlluminaManifestRecord {
     protected enum Flag {
@@ -79,7 +79,6 @@ public class ExtendedIlluminaManifestRecord extends IlluminaManifestRecord {
     private static final int SRC_SEQ_FIRST_VARIANT_SEQUENCE  = 2;
     private static final int SRC_SEQ_SECOND_VARIANT_SEQUENCE = 3;
     private static final int SRC_SEQ_SEQUENCE_AFTER_VARIANT  = 4;
-
 
     private static String build36 = "36";
     private static String build37 = "37";
@@ -207,8 +206,8 @@ public class ExtendedIlluminaManifestRecord extends IlluminaManifestRecord {
         //set dupe first so it can be overridden by fail flags
         if (dupe) flag = Flag.DUPE;
 
-        // short circuit on non-existant values
-        if (r.getChr().trim().equals("0")) {
+        // Look for entries which Illumina has marked as invalid
+        if (r.getChr().trim().equals(ILLUMINA_FLAGGED_BAD_CHR)) {
             flag = Flag.ILLUMINA_FLAGGED;
         }
 

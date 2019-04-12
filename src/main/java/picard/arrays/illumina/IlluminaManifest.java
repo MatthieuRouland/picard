@@ -43,12 +43,10 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * A class to represent an Illumina Manifest file.  Reads the header, stores the contents, and then provides an iterator to allow
- * access to the IlluminaManifestRecords (the assay records - that's all for now).
+ * A class to represent an Illumina Manifest file.
  *
- * User: ggrant
- * Date: 9/24/13
- * Time: 9:46 AM
+ * Reads the header, stores the contents, and then provides an iterator to allow
+ * access to the IlluminaManifestRecords (currently this only supports iterating over the assay records).
  */
 public class IlluminaManifest  {
     public static final String HG17 = "HG17";

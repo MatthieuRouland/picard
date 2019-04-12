@@ -25,11 +25,17 @@
 package picard.arrays.illumina;
 
 
+import picard.PicardException;
+
 import java.io.DataInputStream;
 import java.io.IOException;
 
 /**
- * Infinium GTC File parser
+ * A class to parse the contents of an Illumina Infinium genotype (GTC) file
+ *
+ * A GTC file is the output of Illumina's genotype calling software (either Autocall or Autoconvert) and
+ * contains genotype calls, confidence scores, basecalls and raw intensities for all calls made on the chip.
+ *
  * This class will parse the binary GTC file format and allow access to the genotype, scores, basecalls and raw
  * intensities.
  */
@@ -66,6 +72,10 @@ public class InfiniumGTCFile extends InfiniumDataFile {
     private static final int INTENSITY_X_PERCENTILES = 1014;
     private static final int INTENSITY_Y_PERCENTILES = 1015;
     private static final int SENTRIX_ID = 1016;
+
+    private static final int NUM_ALLELES = 2;
+    private static final int NO_CALL_CHAR = (int) '-';      // Used for string representation of no-call "--"
+    private static final String GTC_IDENTIFIER = "gtc";
 
     private final InfiniumNormalizationManifest normalizationManifest;
 
@@ -112,14 +122,10 @@ public class InfiniumGTCFile extends InfiniumDataFile {
     private int numIntensityOnly;
 
     //intensity X percentiles - 1014
-    private int p05Red;
-    private int p50Red;
-    private int p95Red;
+    private IntensityPercentiles redIntensityPercentiles;
 
     //intensity Y percentiles - 1015
-    private int p05Green;
-    private int p50Green;
-    private int p95Green;
+    private IntensityPercentiles greenIntensityPercentiles;
 
     private String sentrixBarcode;
 
@@ -182,7 +188,11 @@ public class InfiniumGTCFile extends InfiniumDataFile {
                 curIdentifier[i] = stream.readByte();
             }
 
-            setIdentifier(new String(curIdentifier));
+            String identifier = new String(curIdentifier);
+            setIdentifier(identifier);
+            if (!identifier.equals(GTC_IDENTIFIER)) {
+                throw new PicardException("Invalid identifier '" + identifier + "' for GTC file");
+            }
             setFileVersion(stream.readByte());
             setNumberOfEntries(Integer.reverseBytes(stream.readInt()));
 
@@ -253,10 +263,8 @@ public class InfiniumGTCFile extends InfiniumDataFile {
             if (currentNormId == normId) {
                 return index;
             }
-
             index++;
         }
-
         return -1;
     }
 
@@ -355,10 +363,10 @@ public class InfiniumGTCFile extends InfiniumDataFile {
                 logRRatios = parseFloatArray(toc);
                 break;
             case INTENSITY_X_PERCENTILES:
-                parseRedIntensityPercentiles(toc);
+                redIntensityPercentiles = new IntensityPercentiles(parseShort(toc), readShort(), readShort());
                 break;
             case INTENSITY_Y_PERCENTILES:
-                parseGreenIntensityPercentiles(toc);
+                greenIntensityPercentiles = new IntensityPercentiles(parseShort(toc), readShort(), readShort());
                 break;
             case SENTRIX_ID:
                 sentrixBarcode = parseString(toc);
@@ -366,18 +374,6 @@ public class InfiniumGTCFile extends InfiniumDataFile {
             default:
                 // throw new MPGException(new StringBuilder().append("Unknown GTC TOC id: ").append(toc.getTableOfContentsId()).toString());
         }
-    }
-
-    private void parseRedIntensityPercentiles(final InfiniumFileTOC toc) throws IOException {
-        p05Red = parseShort(toc);
-        p50Red = readShort();
-        p95Red = readShort();
-    }
-
-    private void parseGreenIntensityPercentiles(final InfiniumFileTOC toc) throws IOException {
-        p05Green = parseShort(toc);
-        p50Green = readShort();
-        p95Green = readShort();
     }
 
     private void parseExtendedSampleData(final InfiniumFileTOC toc) throws IOException {
@@ -413,7 +409,7 @@ public class InfiniumGTCFile extends InfiniumDataFile {
         final byte[][] genotypeStrings = new byte[genotypeBytes.length][];
 
         for (int i = 0; i < genotypeBytes.length; i++) {
-            genotypeStrings[i] = new byte[2];
+            genotypeStrings[i] = new byte[NUM_ALLELES];
 
             final byte genotypeByte = genotypeBytes[i];
             switch (genotypeByte) {
@@ -461,7 +457,7 @@ public class InfiniumGTCFile extends InfiniumDataFile {
             for (int j = 0; j < baseCallBytes.length; j++) {
                 baseCallBytes[j] = stream.readByte();
                 if (baseCallBytes[j] == 0) {
-                    baseCallBytes[j] = 45;
+                    baseCallBytes[j] = NO_CALL_CHAR;
                 }
             }
         }
@@ -526,7 +522,7 @@ public class InfiniumGTCFile extends InfiniumDataFile {
     }
 
     public double getHetPercent() {
-        return (double) abCalls / (double) numCalls * 100d;
+        return (double) abCalls / (double) numCalls;
     }
 
     public String getSampleName() {
@@ -641,9 +637,7 @@ public class InfiniumGTCFile extends InfiniumDataFile {
         return rawYIntensities[index];
     }
 
-    public float getNormalizedXIntensity(int index) {
-        return normalizedXIntensities[index];
-    }
+    public float getNormalizedXIntensity(int index) { return normalizedXIntensities[index]; }
 
     public float getNormalizedYIntensity(int index) {
         return normalizedYIntensities[index];
@@ -681,29 +675,17 @@ public class InfiniumGTCFile extends InfiniumDataFile {
         return ploidyType;
     }
 
-    public int getP05Red() {
-        return p05Red;
-    }
+    public int getP05Red() { return redIntensityPercentiles.p05; }
 
-    public int getP50Red() {
-        return p50Red;
-    }
+    public int getP50Red() { return redIntensityPercentiles.p50; }
 
-    public int getP95Red() {
-        return p95Red;
-    }
+    public int getP95Red() { return redIntensityPercentiles.p95; }
 
-    public int getP05Green() {
-        return p05Green;
-    }
+    public int getP05Green() { return greenIntensityPercentiles.p05; }
 
-    public int getP50Green() {
-        return p50Green;
-    }
+    public int getP50Green() { return greenIntensityPercentiles.p50; }
 
-    public int getP95Green() {
-        return p95Green;
-    }
+    public int getP95Green() { return greenIntensityPercentiles.p95; }
 
     public float getLogRDev() {
         return logRDev;
@@ -772,4 +754,20 @@ public class InfiniumGTCFile extends InfiniumDataFile {
     public int getAbCalls() {
         return abCalls;
     }
+
+    /**
+     * A class to store Illumina Intensity Percentiles
+     */
+    private class IntensityPercentiles {
+        private final int p05;
+        private final int p50;
+        private final int p95;
+
+        IntensityPercentiles(int p05, int p50, int p95) {
+            this.p05 = p05;
+            this.p50 = p50;
+            this.p95 = p95;
+        }
+    }
+
 }

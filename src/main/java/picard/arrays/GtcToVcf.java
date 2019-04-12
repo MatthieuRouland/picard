@@ -414,12 +414,12 @@ public class GtcToVcf extends CommandLineProgram {
                 builder.attribute(InfiniumVcfFields.MEAN_X_AA, formatFloatForVcf(aaVals.meanX));
                 builder.attribute(InfiniumVcfFields.MEAN_X_AB, formatFloatForVcf(abVals.meanX));
                 builder.attribute(InfiniumVcfFields.MEAN_X_BB, formatFloatForVcf(bbVals.meanX));
-                builder.attribute(InfiniumVcfFields.DEV_Y_AA, formatFloatForVcf(aaVals.devY));
-                builder.attribute(InfiniumVcfFields.DEV_Y_AB, formatFloatForVcf(abVals.devY));
-                builder.attribute(InfiniumVcfFields.DEV_Y_BB, formatFloatForVcf(bbVals.devY));
-                builder.attribute(InfiniumVcfFields.MEAN_Y_AA, formatFloatForVcf(aaVals.meanY));
-                builder.attribute(InfiniumVcfFields.MEAN_Y_AB, formatFloatForVcf(abVals.meanY));
-                builder.attribute(InfiniumVcfFields.MEAN_Y_BB, formatFloatForVcf(bbVals.meanY));
+                builder.attribute(InfiniumVcfFields.DEV_Y[InfiniumVcfFields.GENOTYPE_VALUES.AA.ordinal()], formatFloatForVcf(aaVals.devY));
+                builder.attribute(InfiniumVcfFields.DEV_Y[InfiniumVcfFields.GENOTYPE_VALUES.AB.ordinal()], formatFloatForVcf(abVals.devY));
+                builder.attribute(InfiniumVcfFields.DEV_Y[InfiniumVcfFields.GENOTYPE_VALUES.BB.ordinal()], formatFloatForVcf(bbVals.devY));
+                builder.attribute(InfiniumVcfFields.MEAN_Y[InfiniumVcfFields.GENOTYPE_VALUES.AA.ordinal()], formatFloatForVcf(aaVals.meanY));
+                builder.attribute(InfiniumVcfFields.MEAN_Y[InfiniumVcfFields.GENOTYPE_VALUES.AB.ordinal()], formatFloatForVcf(abVals.meanY));
+                builder.attribute(InfiniumVcfFields.MEAN_Y[InfiniumVcfFields.GENOTYPE_VALUES.BB.ordinal()], formatFloatForVcf(bbVals.meanY));
                 if (zCallThresholds.containsKey(egtFile.rsNames[egtIndex])) {
                     String[] zThresh = zCallThresholds.get(egtFile.rsNames[egtIndex]);
                     builder.attribute(InfiniumVcfFields.ZTHRESH_X, zThresh[0]);
@@ -461,7 +461,7 @@ public class GtcToVcf extends CommandLineProgram {
         final double rOverX = (1 + Math.tan(normalizedTheta));
 
         //calculate X and Y variances from R and Theta variances
-        final double thetaVarianceFactorX = -1 * (halfPi * r) * Math.pow((1 + Math.tan(normalizedTheta)), -2) * (1 / Math.pow(Math.cos(normalizedTheta), 2));
+        final double thetaVarianceFactorX = -1 * (halfPi * r) * Math.pow((1 + Math.tan(normalizedTheta))  * Math.cos(normalizedTheta), -2);
         final double rVarianceFactorX = 1 / (1 + Math.tan(normalizedTheta));
         final double varianceX = (Math.pow(thetaVarianceFactorX, 2) * thetaVariance) + (Math.pow(rVarianceFactorX, 2) * rVariance);
         final double thetaVarianceFactorY = -1 * thetaVarianceFactorX;
@@ -470,9 +470,9 @@ public class GtcToVcf extends CommandLineProgram {
 
         /*
             Theta quantifies the relative amount of signal measured by the A and B intensities, defined by the equation:
-            1/(2pi) * arctan(1/XY). R is a measurement of the total intensity observed from the A and B signals, defined as: R = A+B
+            (pi/2) * arctan(Y/X). R is a measurement of the total intensity observed from the A and B signals, defined as: R = A+B
             Illumina uses Manhattan distance https://en.wikipedia.org/wiki/Taxicab_geometry which is why R is A+B and not sqrt(A^2 + B^2)
-            So Theta = 1/(2pi) * arctan(X/Y) and R = X + Y
+            So Theta = (2/pi) * arctan(Y/X) and R = X + Y
          */
 
         final double meanX = r / rOverX;
@@ -492,7 +492,6 @@ public class GtcToVcf extends CommandLineProgram {
             this.devX = devX;
             this.devY = devY;
         }
-
     }
 
     private Genotype getGenotype(final InfiniumGTCFile infiniumGTCFile,
@@ -654,9 +653,9 @@ public class GtcToVcf extends CommandLineProgram {
         lines.add(new VCFInfoHeaderLine(InfiniumVcfFields.DEV_X_AA, 1, VCFHeaderLineType.Float, "Standard deviation of normalized X for AA cluster"));
         lines.add(new VCFInfoHeaderLine(InfiniumVcfFields.DEV_X_AB, 1, VCFHeaderLineType.Float, "Standard deviation of normalized X for AB cluster"));
         lines.add(new VCFInfoHeaderLine(InfiniumVcfFields.DEV_X_BB, 1, VCFHeaderLineType.Float, "Standard deviation of normalized X for BB cluster"));
-        lines.add(new VCFInfoHeaderLine(InfiniumVcfFields.DEV_Y_AA, 1, VCFHeaderLineType.Float, "Standard deviation of normalized Y for AA cluster"));
-        lines.add(new VCFInfoHeaderLine(InfiniumVcfFields.DEV_Y_AB, 1, VCFHeaderLineType.Float, "Standard deviation of normalized Y for AB cluster"));
-        lines.add(new VCFInfoHeaderLine(InfiniumVcfFields.DEV_Y_BB, 1, VCFHeaderLineType.Float, "Standard deviation of normalized Y for BB cluster"));
+        for (InfiniumVcfFields.GENOTYPE_VALUES gtValue : InfiniumVcfFields.GENOTYPE_VALUES.values()) {
+            lines.add(new VCFInfoHeaderLine(InfiniumVcfFields.DEV_Y[gtValue.ordinal()], 1, VCFHeaderLineType.Float, "Standard deviation of normalized Y for " + gtValue.name() +" cluster"));
+        }
         lines.add(new VCFInfoHeaderLine(InfiniumVcfFields.MEAN_R_AA, 1, VCFHeaderLineType.Float, "Mean of normalized R for AA cluster"));
         lines.add(new VCFInfoHeaderLine(InfiniumVcfFields.MEAN_R_AB, 1, VCFHeaderLineType.Float, "Mean of normalized R for AB cluster"));
         lines.add(new VCFInfoHeaderLine(InfiniumVcfFields.MEAN_R_BB, 1, VCFHeaderLineType.Float, "Mean of normalized R for BB cluster"));
@@ -666,9 +665,9 @@ public class GtcToVcf extends CommandLineProgram {
         lines.add(new VCFInfoHeaderLine(InfiniumVcfFields.MEAN_X_AA, 1, VCFHeaderLineType.Float, "Mean of normalized X for AA cluster"));
         lines.add(new VCFInfoHeaderLine(InfiniumVcfFields.MEAN_X_AB, 1, VCFHeaderLineType.Float, "Mean of normalized X for AB cluster"));
         lines.add(new VCFInfoHeaderLine(InfiniumVcfFields.MEAN_X_BB, 1, VCFHeaderLineType.Float, "Mean of normalized X for BB cluster"));
-        lines.add(new VCFInfoHeaderLine(InfiniumVcfFields.MEAN_Y_AA, 1, VCFHeaderLineType.Float, "Mean of normalized Y for AA cluster"));
-        lines.add(new VCFInfoHeaderLine(InfiniumVcfFields.MEAN_Y_AB, 1, VCFHeaderLineType.Float, "Mean of normalized Y for AB cluster"));
-        lines.add(new VCFInfoHeaderLine(InfiniumVcfFields.MEAN_Y_BB, 1, VCFHeaderLineType.Float, "Mean of normalized Y for BB cluster"));
+        for (InfiniumVcfFields.GENOTYPE_VALUES gtValue : InfiniumVcfFields.GENOTYPE_VALUES.values()) {
+            lines.add(new VCFInfoHeaderLine(InfiniumVcfFields.MEAN_Y[gtValue.ordinal()], 1, VCFHeaderLineType.Float, "Mean of normalized Y for " + gtValue.name() +" cluster"));
+        }
         lines.add(new VCFInfoHeaderLine(InfiniumVcfFields.ZTHRESH_X, 1, VCFHeaderLineType.Float, "zCall X threshold"));
         lines.add(new VCFInfoHeaderLine(InfiniumVcfFields.ZTHRESH_Y, 1, VCFHeaderLineType.Float, "zCall Y threshold"));
         lines.add(new VCFInfoHeaderLine(InfiniumVcfFields.RS_ID, 1, VCFHeaderLineType.String, "dbSNP rs ID"));

@@ -31,6 +31,9 @@ import htsjdk.variant.vcf.VCFHeaderLine;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
+/**
+ * A class to store fields that are specific to a VCF generated from an Illumina GTC file.
+ */
 public class InfiniumVcfFields {
     // Header Fields
     public static final String ARRAY_TYPE = "arrayType";
@@ -102,15 +105,18 @@ public class InfiniumVcfFields {
     public static final String MEAN_X_AA = "meanX_AA";
     public static final String MEAN_X_AB = "meanX_AB";
     public static final String MEAN_X_BB = "meanX_BB";
-    public static final String DEV_Y_AA = "devY_AA";
-    public static final String DEV_Y_AB = "devY_AB";
-    public static final String DEV_Y_BB = "devY_BB";
-    public static final String MEAN_Y_AA = "meanY_AA";
-    public static final String MEAN_Y_AB = "meanY_AB";
-    public static final String MEAN_Y_BB = "meanY_BB";
+    public static final String[] DEV_Y = new String[GENOTYPE_VALUES.values().length];
+    public static final String[] MEAN_Y = new String[GENOTYPE_VALUES.values().length];
     public static final String ZTHRESH_X = "zthresh_X";
     public static final String ZTHRESH_Y = "zthresh_Y";
     public static final String RS_ID = "refSNP";
+
+    static {
+        for (GENOTYPE_VALUES gtValue : GENOTYPE_VALUES.values()) {
+            DEV_Y[gtValue.ordinal()] = "devY_" + gtValue.name();
+            MEAN_Y[gtValue.ordinal()] = "meanY_" + gtValue.name();
+        }
+    }
 
     //FILTER Fields
     public static final String TRIALLELIC = "TRIALLELIC";
@@ -118,6 +124,9 @@ public class InfiniumVcfFields {
     public static final String FAIL_REF = "FAIL_REF";
     public static final String ZCALL_DIFF = "ZCALL_DIFF";
     public static final String ZEROED_OUT_ASSAY = "ZEROED_OUT_ASSAY";
+
+    public static enum GENOTYPE_VALUES {AA, AB, BB}
+
 
     public static String  getValueFromVcfOtherHeaderLine(final VCFHeader vcfHeader, final String keyName) {
         VCFHeaderLine otherHeaderLine = vcfHeader.getOtherHeaderLine(keyName);

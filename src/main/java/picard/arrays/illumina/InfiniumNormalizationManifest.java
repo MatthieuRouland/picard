@@ -34,6 +34,13 @@ import java.io.LineNumberReader;
 import java.util.Set;
 import java.util.TreeSet;
 
+/**
+ * A class to parse the contents of an Illumina Infinium Normalization Manifest file
+ *
+ * An Illumina Infinium Normalization Manifest file contains a subset of the information contained in the Illumina
+ * Manifest file in addition to the normalization ID which is needed for normalizating intensities in GtcToVcf
+ *
+ */
 public class InfiniumNormalizationManifest {
     private long[] positions;
     private byte[] chromosomes;

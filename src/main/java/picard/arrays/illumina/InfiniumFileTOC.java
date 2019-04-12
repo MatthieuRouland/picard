@@ -24,15 +24,18 @@
 
 package picard.arrays.illumina;
 
+/**
+ * A class to encapsulate the table of contents for an Illumina Infinium Data Files.
+ */
 public class InfiniumFileTOC {
     private short tableOfContentsId;
     private int offset;
 
-    public short getTableOfContentsId() {
+    short getTableOfContentsId() {
         return tableOfContentsId;
     }
 
-    public void setTableOfContentsId(short tableOfContentsId) {
+    void setTableOfContentsId(short tableOfContentsId) {
         this.tableOfContentsId = tableOfContentsId;
     }
 

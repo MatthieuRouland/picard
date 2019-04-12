@@ -33,7 +33,12 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-
+/**
+ * A class to parse the contents of an Illumina Infinium cluster (EGT) file
+ *
+ * A cluster file contains information about the clustering information used in mapping red / green intensity information
+ * to genotype calls
+ */
 public class InfiniumEGTFile extends InfiniumDataFile {
     public static final String EXTENSION = "egt";
 

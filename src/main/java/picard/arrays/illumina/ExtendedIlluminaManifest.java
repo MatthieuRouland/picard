@@ -31,10 +31,22 @@ import java.io.IOException;
 import java.util.Iterator;
 
 /**
- * The Extended Illumina Manifest has additional BUILD37 columns.
+ * A class to represent an 'Extended' Illumina Manifest file.
  *
- * Reads the header, stores the contents, and then provides an iterator to allow
- * access to the ManifestRecords (the assay records - that's all for now).
+ * An Extended Illumina Manifest extends a 'standard' Illumina Manifest by adding seven new fields (columns) to the manifest
+ * These are currently specific to the reference NCBI Build 37 / HG38.
+ * The columns are:
+ *   'build37Chr' - the chromosome of the manifest entry, on build 37
+ *   'build37Pos' - the position of the manifest entry, on build 37
+ *   'build37RefAllele' - the reference allele of the manifest entry, on build 37
+ *   'build37AlleleA' - allele A of the manifest entry, on build 37
+ *   'build37AlleleB' - allele B of the manifest entry, on build 37
+ *   'build37Rsid' - The rsid the manifest entry, on build 37
+ *   'build37Flag' - A flag describing the validation status of the manifest entry
+ *
+ * Like the class IlluminaManifest which this class extends, this class reads the extended manifest header, stores the contents,
+ * and then provides an iterator to allow access to the ExtendedIlluminaManifestRecords
+ * (currently this only supports iterating over the assay records).
  */
 public class ExtendedIlluminaManifest extends IlluminaManifest {
 

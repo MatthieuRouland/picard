@@ -24,6 +24,9 @@
 
 package picard.arrays.illumina;
 
+/**
+ * A simple class to store names and counts for the the Control Information fields that are stored in an Illumina GTC file.
+ */
 public class ArraysControlInfo {
 
     private final String control;
