@@ -138,20 +138,23 @@ public class GtcToVcf extends CommandLineProgram {
     @Argument(shortName = "NORM_MANIFEST", doc = "An Infinium manifest containing the normalization ids (bpm.csv)")
     public File ILLUMINA_NORMALIZATION_MANIFEST;
 
-    @Argument(shortName = "E_GENDER", doc = "The expected gender for this sample.")
+    @Argument(shortName = "E_GENDER", doc = "The expected gender for this sample.", optional = true)
     public String EXPECTED_GENDER;
 
     @Argument(doc = "The sample alias")
     public String SAMPLE_ALIAS;
 
-    @Argument(doc = "The analysis version of the data used to generate this VCF")
+    @Argument(doc = "The analysis version of the data used to generate this VCF", optional = true)
     public Integer ANALYSIS_VERSION_NUMBER;
 
     @Argument(shortName = "G_GTC", doc = "GTC file that was called using the gender cluster file.", optional = true)
     public File GENDER_GTC;
 
-    @Argument(shortName = "ZCALL_T_FILE", doc = "The zcall thresholds file.", optional = true)
+    @Argument(shortName = "ZCALL_T_FILE", doc = "The zcall thresholds file", optional = true)
     public File ZCALL_THRESHOLDS_FILE = null;
+
+    @Argument(shortName = "ZCALL_VERSION", doc = "The version of zcall used", optional = true)
+    public String ZCALL_VERSION = null;
 
     @Argument(shortName = "FP_VCF", doc = "The fingerprint VCF for this sample", optional = true)
     public File FINGERPRINT_GENOTYPES_VCF_FILE;
@@ -262,12 +265,12 @@ public class GtcToVcf extends CommandLineProgram {
             }
 
             if (infiniumGTCFile.getNumberOfSnps() != manifest.getNumAssays()) {
-                log.warn("The number of SNPs in the GTC file: " + infiniumGTCFile.getNumberOfSnps() +
-                        " does not equal the number of SNPs in the Illumina manifest file: " + manifest.getNumAssays());
+                log.warn("The number of Assays in the GTC file: " + infiniumGTCFile.getNumberOfSnps() +
+                        " does not equal the number of Assays in the Illumina manifest file: " + manifest.getNumAssays());
             }
             return manifest;
         } catch (IOException e) {
-            throw new PicardException("Failed to setup");
+            throw new PicardException("Error during setup", e);
         }
     }
 
@@ -285,7 +288,7 @@ public class GtcToVcf extends CommandLineProgram {
             });
 
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new PicardException("Error parsing ZCall Thresholds File", e);
         }
     }
 
@@ -581,9 +584,13 @@ public class GtcToVcf extends CommandLineProgram {
         lines.add(new VCFHeaderLine(InfiniumVcfFields.EXTENDED_ILLUMINA_MANIFEST_VERSION, manifest.getExtendedManifestVersion()));
 
         lines.add(new VCFHeaderLine(InfiniumVcfFields.CHIP_WELL_BARCODE, chipWellBarcode));
-        lines.add(new VCFHeaderLine(InfiniumVcfFields.ANALYSIS_VERSION_NUMBER, ANALYSIS_VERSION_NUMBER.toString()));
+        if (ANALYSIS_VERSION_NUMBER != null) {
+            lines.add(new VCFHeaderLine(InfiniumVcfFields.ANALYSIS_VERSION_NUMBER, ANALYSIS_VERSION_NUMBER.toString()));
+        }
         lines.add(new VCFHeaderLine(InfiniumVcfFields.SAMPLE_ALIAS, SAMPLE_ALIAS));
-        lines.add(new VCFHeaderLine(InfiniumVcfFields.EXPECTED_GENDER, EXPECTED_GENDER));
+        if (EXPECTED_GENDER != null) {
+            lines.add(new VCFHeaderLine(InfiniumVcfFields.EXPECTED_GENDER, EXPECTED_GENDER));
+        }
         //add control codes
         final int measurementCount = gtcFile.getRawControlXIntensities().length / ArraysControlInfo.CONTROL_INFO.length;
         for (int i = 0; i < ArraysControlInfo.CONTROL_INFO.length; i++) {
@@ -605,7 +612,9 @@ public class GtcToVcf extends CommandLineProgram {
         lines.add(new VCFHeaderLine(InfiniumVcfFields.MANIFEST_FILE, descriptorFileName));
         lines.add(new VCFHeaderLine("content", manifest.getManifestFile().getName()));
         lines.add(new VCFHeaderLine(InfiniumVcfFields.AUTOCALL_VERSION, gtcFile.getAutoCallVersion()));
-        lines.add(new VCFHeaderLine(InfiniumVcfFields.ZCALL_VERSION, "1.0.0.0"));
+        if (ZCALL_VERSION != null) {
+            lines.add(new VCFHeaderLine(InfiniumVcfFields.ZCALL_VERSION, ZCALL_VERSION));
+        }
         if (ZCALL_THRESHOLDS_FILE != null)
             lines.add(new VCFHeaderLine(InfiniumVcfFields.ZCALL_THRESHOLDS, ZCALL_THRESHOLDS_FILE.getName()));
         lines.add(new VCFHeaderLine("reference", reference.getAbsolutePath()));
