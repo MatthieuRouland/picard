@@ -84,37 +84,30 @@ public class InfiniumVcfFields {
     public static final String ILLUMINA_BUILD = "ILLUMINA_BUILD";
     public static final String SOURCE = "SOURCE";
     public static final String GC_SCORE = "GC_SCORE";
-    public static final String N_AA = "N_AA";
-    public static final String N_AB = "N_AB";
-    public static final String N_BB = "N_BB";
-    public static final String DEV_R_AA = "devR_AA";
-    public static final String DEV_R_AB = "devR_AB";
-    public static final String DEV_R_BB = "devR_BB";
-    public static final String MEAN_R_AA = "meanR_AA";
-    public static final String MEAN_R_AB = "meanR_AB";
-    public static final String MEAN_R_BB = "meanR_BB";
-    public static final String DEV_THETA_AA = "devTHETA_AA";
-    public static final String DEV_THETA_AB = "devTHETA_AB";
-    public static final String DEV_THETA_BB = "devTHETA_BB";
-    public static final String MEAN_THETA_AA = "meanTHETA_AA";
-    public static final String MEAN_THETA_AB = "meanTHETA_AB";
-    public static final String MEAN_THETA_BB = "meanTHETA_BB";
-    public static final String DEV_X_AA = "devX_AA";
-    public static final String DEV_X_AB = "devX_AB";
-    public static final String DEV_X_BB = "devX_BB";
-    public static final String MEAN_X_AA = "meanX_AA";
-    public static final String MEAN_X_AB = "meanX_AB";
-    public static final String MEAN_X_BB = "meanX_BB";
-    public static final String[] DEV_Y = new String[GENOTYPE_VALUES.values().length];
+    public static final String[] N = new String[GENOTYPE_VALUES.values().length];
+    public static final String[] MEAN_R = new String[GENOTYPE_VALUES.values().length];
+    public static final String[] DEV_R = new String[GENOTYPE_VALUES.values().length];
+    public static final String[] MEAN_THETA = new String[GENOTYPE_VALUES.values().length];
+    public static final String[] DEV_THETA = new String[GENOTYPE_VALUES.values().length];
+    public static final String[] MEAN_X = new String[GENOTYPE_VALUES.values().length];
+    public static final String[] DEV_X = new String[GENOTYPE_VALUES.values().length];
     public static final String[] MEAN_Y = new String[GENOTYPE_VALUES.values().length];
+    public static final String[] DEV_Y = new String[GENOTYPE_VALUES.values().length];
     public static final String ZTHRESH_X = "zthresh_X";
     public static final String ZTHRESH_Y = "zthresh_Y";
     public static final String RS_ID = "refSNP";
 
     static {
         for (GENOTYPE_VALUES gtValue : GENOTYPE_VALUES.values()) {
-            DEV_Y[gtValue.ordinal()] = "devY_" + gtValue.name();
+            N[gtValue.ordinal()] = "N_" + gtValue.name();
+            MEAN_R[gtValue.ordinal()] = "meanR_" + gtValue.name();
+            DEV_R[gtValue.ordinal()] = "devR_" + gtValue.name();
+            MEAN_THETA[gtValue.ordinal()] = "meanTHETA_" + gtValue.name();
+            DEV_THETA[gtValue.ordinal()] = "devTHETA_" + gtValue.name();
+            MEAN_X[gtValue.ordinal()] = "meanX_" + gtValue.name();
+            DEV_X[gtValue.ordinal()] = "devX_" + gtValue.name();
             MEAN_Y[gtValue.ordinal()] = "meanY_" + gtValue.name();
+            DEV_Y[gtValue.ordinal()] = "devY_" + gtValue.name();
         }
     }
 

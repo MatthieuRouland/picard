@@ -385,21 +385,21 @@ public class GtcToVcf extends CommandLineProgram {
                 builder.attribute(InfiniumVcfFields.ILLUMINA_BUILD, record.getGenomeBuild());
                 builder.attribute(InfiniumVcfFields.SOURCE, record.getSource().replace(' ', '_'));
                 builder.attribute(InfiniumVcfFields.GC_SCORE, formatFloatForVcf(egtFile.totalScore[egtIndex]));
-                builder.attribute(InfiniumVcfFields.N_AA, egtFile.nAA[egtIndex]);
-                builder.attribute(InfiniumVcfFields.N_AB, egtFile.nAB[egtIndex]);
-                builder.attribute(InfiniumVcfFields.N_BB, egtFile.nBB[egtIndex]);
-                builder.attribute(InfiniumVcfFields.DEV_R_AA, formatFloatForVcf(egtFile.devRAA[egtIndex]));
-                builder.attribute(InfiniumVcfFields.DEV_R_AB, formatFloatForVcf(egtFile.devRAB[egtIndex]));
-                builder.attribute(InfiniumVcfFields.DEV_R_BB, formatFloatForVcf(egtFile.devRBB[egtIndex]));
-                builder.attribute(InfiniumVcfFields.MEAN_R_AA, formatFloatForVcf(egtFile.meanRAA[egtIndex]));
-                builder.attribute(InfiniumVcfFields.MEAN_R_AB, formatFloatForVcf(egtFile.meanRAB[egtIndex]));
-                builder.attribute(InfiniumVcfFields.MEAN_R_BB, formatFloatForVcf(egtFile.meanRBB[egtIndex]));
-                builder.attribute(InfiniumVcfFields.DEV_THETA_AA, formatFloatForVcf(egtFile.devThetaAA[egtIndex]));
-                builder.attribute(InfiniumVcfFields.DEV_THETA_AB, formatFloatForVcf(egtFile.devThetaAB[egtIndex]));
-                builder.attribute(InfiniumVcfFields.DEV_THETA_BB, formatFloatForVcf(egtFile.devThetaBB[egtIndex]));
-                builder.attribute(InfiniumVcfFields.MEAN_THETA_AA, formatFloatForVcf(egtFile.meanThetaAA[egtIndex]));
-                builder.attribute(InfiniumVcfFields.MEAN_THETA_AB, formatFloatForVcf(egtFile.meanThetaAB[egtIndex]));
-                builder.attribute(InfiniumVcfFields.MEAN_THETA_BB, formatFloatForVcf(egtFile.meanThetaBB[egtIndex]));
+                builder.attribute(InfiniumVcfFields.N[InfiniumVcfFields.GENOTYPE_VALUES.AA.ordinal()], egtFile.nAA[egtIndex]);
+                builder.attribute(InfiniumVcfFields.N[InfiniumVcfFields.GENOTYPE_VALUES.AB.ordinal()], egtFile.nAB[egtIndex]);
+                builder.attribute(InfiniumVcfFields.N[InfiniumVcfFields.GENOTYPE_VALUES.BB.ordinal()], egtFile.nBB[egtIndex]);
+                builder.attribute(InfiniumVcfFields.DEV_R[InfiniumVcfFields.GENOTYPE_VALUES.AA.ordinal()], formatFloatForVcf(egtFile.devRAA[egtIndex]));
+                builder.attribute(InfiniumVcfFields.DEV_R[InfiniumVcfFields.GENOTYPE_VALUES.AB.ordinal()], formatFloatForVcf(egtFile.devRAB[egtIndex]));
+                builder.attribute(InfiniumVcfFields.DEV_R[InfiniumVcfFields.GENOTYPE_VALUES.BB.ordinal()], formatFloatForVcf(egtFile.devRBB[egtIndex]));
+                builder.attribute(InfiniumVcfFields.MEAN_R[InfiniumVcfFields.GENOTYPE_VALUES.AA.ordinal()], formatFloatForVcf(egtFile.meanRAA[egtIndex]));
+                builder.attribute(InfiniumVcfFields.MEAN_R[InfiniumVcfFields.GENOTYPE_VALUES.AB.ordinal()], formatFloatForVcf(egtFile.meanRAB[egtIndex]));
+                builder.attribute(InfiniumVcfFields.MEAN_R[InfiniumVcfFields.GENOTYPE_VALUES.BB.ordinal()], formatFloatForVcf(egtFile.meanRBB[egtIndex]));
+                builder.attribute(InfiniumVcfFields.DEV_THETA[InfiniumVcfFields.GENOTYPE_VALUES.AA.ordinal()], formatFloatForVcf(egtFile.devThetaAA[egtIndex]));
+                builder.attribute(InfiniumVcfFields.DEV_THETA[InfiniumVcfFields.GENOTYPE_VALUES.AB.ordinal()], formatFloatForVcf(egtFile.devThetaAB[egtIndex]));
+                builder.attribute(InfiniumVcfFields.DEV_THETA[InfiniumVcfFields.GENOTYPE_VALUES.BB.ordinal()], formatFloatForVcf(egtFile.devThetaBB[egtIndex]));
+                builder.attribute(InfiniumVcfFields.MEAN_THETA[InfiniumVcfFields.GENOTYPE_VALUES.AA.ordinal()], formatFloatForVcf(egtFile.meanThetaAA[egtIndex]));
+                builder.attribute(InfiniumVcfFields.MEAN_THETA[InfiniumVcfFields.GENOTYPE_VALUES.AB.ordinal()], formatFloatForVcf(egtFile.meanThetaAB[egtIndex]));
+                builder.attribute(InfiniumVcfFields.MEAN_THETA[InfiniumVcfFields.GENOTYPE_VALUES.BB.ordinal()], formatFloatForVcf(egtFile.meanThetaBB[egtIndex]));
 
                 EuclideanValues aaVals = polarToEuclidean(egtFile.meanRAA[egtIndex], egtFile.devRAA[egtIndex],
                         egtFile.meanThetaAA[egtIndex], egtFile.devThetaAA[egtIndex]);
@@ -408,12 +408,12 @@ public class GtcToVcf extends CommandLineProgram {
                 EuclideanValues bbVals = polarToEuclidean(egtFile.meanRBB[egtIndex], egtFile.devRBB[egtIndex],
                         egtFile.meanThetaBB[egtIndex], egtFile.devThetaBB[egtIndex]);
 
-                builder.attribute(InfiniumVcfFields.DEV_X_AA, formatFloatForVcf(aaVals.devX));
-                builder.attribute(InfiniumVcfFields.DEV_X_AB, formatFloatForVcf(abVals.devX));
-                builder.attribute(InfiniumVcfFields.DEV_X_BB, formatFloatForVcf(bbVals.devX));
-                builder.attribute(InfiniumVcfFields.MEAN_X_AA, formatFloatForVcf(aaVals.meanX));
-                builder.attribute(InfiniumVcfFields.MEAN_X_AB, formatFloatForVcf(abVals.meanX));
-                builder.attribute(InfiniumVcfFields.MEAN_X_BB, formatFloatForVcf(bbVals.meanX));
+                builder.attribute(InfiniumVcfFields.DEV_X[InfiniumVcfFields.GENOTYPE_VALUES.AA.ordinal()], formatFloatForVcf(aaVals.devX));
+                builder.attribute(InfiniumVcfFields.DEV_X[InfiniumVcfFields.GENOTYPE_VALUES.AB.ordinal()], formatFloatForVcf(abVals.devX));
+                builder.attribute(InfiniumVcfFields.DEV_X[InfiniumVcfFields.GENOTYPE_VALUES.BB.ordinal()], formatFloatForVcf(bbVals.devX));
+                builder.attribute(InfiniumVcfFields.MEAN_X[InfiniumVcfFields.GENOTYPE_VALUES.AA.ordinal()], formatFloatForVcf(aaVals.meanX));
+                builder.attribute(InfiniumVcfFields.MEAN_X[InfiniumVcfFields.GENOTYPE_VALUES.AB.ordinal()], formatFloatForVcf(abVals.meanX));
+                builder.attribute(InfiniumVcfFields.MEAN_X[InfiniumVcfFields.GENOTYPE_VALUES.BB.ordinal()], formatFloatForVcf(bbVals.meanX));
                 builder.attribute(InfiniumVcfFields.DEV_Y[InfiniumVcfFields.GENOTYPE_VALUES.AA.ordinal()], formatFloatForVcf(aaVals.devY));
                 builder.attribute(InfiniumVcfFields.DEV_Y[InfiniumVcfFields.GENOTYPE_VALUES.AB.ordinal()], formatFloatForVcf(abVals.devY));
                 builder.attribute(InfiniumVcfFields.DEV_Y[InfiniumVcfFields.GENOTYPE_VALUES.BB.ordinal()], formatFloatForVcf(bbVals.devY));
@@ -641,31 +641,15 @@ public class GtcToVcf extends CommandLineProgram {
         lines.add(new VCFInfoHeaderLine(InfiniumVcfFields.ILLUMINA_BUILD, 1, VCFHeaderLineType.String, "Genome Build in Illumina manifest"));
         lines.add(new VCFInfoHeaderLine(InfiniumVcfFields.SOURCE, 1, VCFHeaderLineType.String, "Probe source"));
         lines.add(new VCFInfoHeaderLine(InfiniumVcfFields.GC_SCORE, 1, VCFHeaderLineType.Float, "Gentrain Score"));
-        lines.add(new VCFInfoHeaderLine(InfiniumVcfFields.N_AA, 1, VCFHeaderLineType.Integer, "Number of AA calls in training set"));
-        lines.add(new VCFInfoHeaderLine(InfiniumVcfFields.N_AB, 1, VCFHeaderLineType.Integer, "Number of AB calls in training set"));
-        lines.add(new VCFInfoHeaderLine(InfiniumVcfFields.N_BB, 1, VCFHeaderLineType.Integer, "Number of BB calls in training set"));
-        lines.add(new VCFInfoHeaderLine(InfiniumVcfFields.DEV_R_AA, 1, VCFHeaderLineType.Float, "Standard deviation of normalized R for AA cluster"));
-        lines.add(new VCFInfoHeaderLine(InfiniumVcfFields.DEV_R_AB, 1, VCFHeaderLineType.Float, "Standard deviation of normalized R for AB cluster"));
-        lines.add(new VCFInfoHeaderLine(InfiniumVcfFields.DEV_R_BB, 1, VCFHeaderLineType.Float, "Standard deviation of normalized R for BB cluster"));
-        lines.add(new VCFInfoHeaderLine(InfiniumVcfFields.DEV_THETA_AA, 1, VCFHeaderLineType.Float, "Standard deviation of normalized THETA for AA cluster"));
-        lines.add(new VCFInfoHeaderLine(InfiniumVcfFields.DEV_THETA_AB, 1, VCFHeaderLineType.Float, "Standard deviation of normalized THETA for AB cluster"));
-        lines.add(new VCFInfoHeaderLine(InfiniumVcfFields.DEV_THETA_BB, 1, VCFHeaderLineType.Float, "Standard deviation of normalized THETA for BB cluster"));
-        lines.add(new VCFInfoHeaderLine(InfiniumVcfFields.DEV_X_AA, 1, VCFHeaderLineType.Float, "Standard deviation of normalized X for AA cluster"));
-        lines.add(new VCFInfoHeaderLine(InfiniumVcfFields.DEV_X_AB, 1, VCFHeaderLineType.Float, "Standard deviation of normalized X for AB cluster"));
-        lines.add(new VCFInfoHeaderLine(InfiniumVcfFields.DEV_X_BB, 1, VCFHeaderLineType.Float, "Standard deviation of normalized X for BB cluster"));
         for (InfiniumVcfFields.GENOTYPE_VALUES gtValue : InfiniumVcfFields.GENOTYPE_VALUES.values()) {
+            lines.add(new VCFInfoHeaderLine(InfiniumVcfFields.N[gtValue.ordinal()], 1, VCFHeaderLineType.Integer, "Number of " + gtValue.name() +" calls in training set"));
+            lines.add(new VCFInfoHeaderLine(InfiniumVcfFields.DEV_R[gtValue.ordinal()], 1, VCFHeaderLineType.Float, "Standard deviation of normalized R for " + gtValue.name() + " cluster"));
+            lines.add(new VCFInfoHeaderLine(InfiniumVcfFields.DEV_THETA[gtValue.ordinal()], 1, VCFHeaderLineType.Float, "Standard deviation of normalized THETA for " + gtValue.name() + " cluster"));
+            lines.add(new VCFInfoHeaderLine(InfiniumVcfFields.DEV_X[gtValue.ordinal()], 1, VCFHeaderLineType.Float, "Standard deviation of normalized X for " + gtValue.name() +" cluster"));
             lines.add(new VCFInfoHeaderLine(InfiniumVcfFields.DEV_Y[gtValue.ordinal()], 1, VCFHeaderLineType.Float, "Standard deviation of normalized Y for " + gtValue.name() +" cluster"));
-        }
-        lines.add(new VCFInfoHeaderLine(InfiniumVcfFields.MEAN_R_AA, 1, VCFHeaderLineType.Float, "Mean of normalized R for AA cluster"));
-        lines.add(new VCFInfoHeaderLine(InfiniumVcfFields.MEAN_R_AB, 1, VCFHeaderLineType.Float, "Mean of normalized R for AB cluster"));
-        lines.add(new VCFInfoHeaderLine(InfiniumVcfFields.MEAN_R_BB, 1, VCFHeaderLineType.Float, "Mean of normalized R for BB cluster"));
-        lines.add(new VCFInfoHeaderLine(InfiniumVcfFields.MEAN_THETA_AA, 1, VCFHeaderLineType.Float, "Mean of normalized THETA for AA cluster"));
-        lines.add(new VCFInfoHeaderLine(InfiniumVcfFields.MEAN_THETA_AB, 1, VCFHeaderLineType.Float, "Mean of normalized THETA for AB cluster"));
-        lines.add(new VCFInfoHeaderLine(InfiniumVcfFields.MEAN_THETA_BB, 1, VCFHeaderLineType.Float, "Mean of normalized THETA for BB cluster"));
-        lines.add(new VCFInfoHeaderLine(InfiniumVcfFields.MEAN_X_AA, 1, VCFHeaderLineType.Float, "Mean of normalized X for AA cluster"));
-        lines.add(new VCFInfoHeaderLine(InfiniumVcfFields.MEAN_X_AB, 1, VCFHeaderLineType.Float, "Mean of normalized X for AB cluster"));
-        lines.add(new VCFInfoHeaderLine(InfiniumVcfFields.MEAN_X_BB, 1, VCFHeaderLineType.Float, "Mean of normalized X for BB cluster"));
-        for (InfiniumVcfFields.GENOTYPE_VALUES gtValue : InfiniumVcfFields.GENOTYPE_VALUES.values()) {
+            lines.add(new VCFInfoHeaderLine(InfiniumVcfFields.MEAN_R[gtValue.ordinal()], 1, VCFHeaderLineType.Float, "Mean of normalized R for " + gtValue.name() + " cluster"));
+            lines.add(new VCFInfoHeaderLine(InfiniumVcfFields.MEAN_THETA[gtValue.ordinal()], 1, VCFHeaderLineType.Float, "Mean of normalized THETA for " + gtValue.name() + " cluster"));
+            lines.add(new VCFInfoHeaderLine(InfiniumVcfFields.MEAN_X[gtValue.ordinal()], 1, VCFHeaderLineType.Float, "Mean of normalized X for " + gtValue.name() +" cluster"));
             lines.add(new VCFInfoHeaderLine(InfiniumVcfFields.MEAN_Y[gtValue.ordinal()], 1, VCFHeaderLineType.Float, "Mean of normalized Y for " + gtValue.name() +" cluster"));
         }
         lines.add(new VCFInfoHeaderLine(InfiniumVcfFields.ZTHRESH_X, 1, VCFHeaderLineType.Float, "zCall X threshold"));
