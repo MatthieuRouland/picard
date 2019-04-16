@@ -72,7 +72,6 @@ import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -85,7 +84,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Stream;
 
 /**
  * Class to convert a GTC file and a BPM file to a VCF file.
@@ -117,7 +115,6 @@ public class GtcToVcf extends CommandLineProgram {
                     "\t--ANALYSIS_VERSION_NUMBER 0\n" +
                     "\t--EXPECTED_GENDER UNKNOWN\n" +
                     "\t--GENDER_GTC gender.gtc\n" +
-                    "\t--ZCALL_THRESHOLDS_FILE thresholds.\n" +
                     "\t--FINGERPRINT_GENOTYPES_VCF_FILE fingerprint_genotypes.vcf" +
                     "</pre><hr />";
 
@@ -150,12 +147,6 @@ public class GtcToVcf extends CommandLineProgram {
     @Argument(shortName = "G_GTC", doc = "GTC file that was called using the gender cluster file.", optional = true)
     public File GENDER_GTC;
 
-    @Argument(shortName = "ZCALL_T_FILE", doc = "The zcall thresholds file", optional = true)
-    public File ZCALL_THRESHOLDS_FILE = null;
-
-    @Argument(shortName = "ZCALL_VERSION", doc = "The version of zcall used", optional = true)
-    public String ZCALL_VERSION = null;
-
     @Argument(shortName = "FP_VCF", doc = "The fingerprint VCF for this sample", optional = true)
     public File FINGERPRINT_GENOTYPES_VCF_FILE;
 
@@ -169,13 +160,11 @@ public class GtcToVcf extends CommandLineProgram {
 
     private static String gtcGender = null;
 
-    private static HashMap<String, String[]> zCallThresholds = new HashMap<>();
-
     private static Sex fingerprintGender;
 
     private static final DecimalFormat df = new DecimalFormat();
 
-    private static final String dot = ".";
+    private static final String DOT = ".";
 
     static {
         df.setMaximumFractionDigits(3);
@@ -230,9 +219,6 @@ public class GtcToVcf extends CommandLineProgram {
         if (GENDER_GTC != null) {
             IOUtil.assertFileIsReadable(GENDER_GTC);
         }
-        if (ZCALL_THRESHOLDS_FILE != null) {
-            IOUtil.assertFileIsReadable(ZCALL_THRESHOLDS_FILE);
-        }
 
         return super.customCommandLineValidation();
     }
@@ -252,10 +238,6 @@ public class GtcToVcf extends CommandLineProgram {
                 }
             }
 
-            if (ZCALL_THRESHOLDS_FILE != null) {
-                parseZCallThresholds();
-            }
-
             final String gtcManifestName = FilenameUtils.removeExtension(infiniumGTCFile.getSnpManifest());
             final String illuminaManifestName = FilenameUtils.removeExtension(manifest.getDescriptorFileName());
 
@@ -271,24 +253,6 @@ public class GtcToVcf extends CommandLineProgram {
             return manifest;
         } catch (IOException e) {
             throw new PicardException("Error during setup", e);
-        }
-    }
-
-    private void parseZCallThresholds() {
-        final String notApplicable = "NA";
-        try (Stream<String> stream = Files.lines(ZCALL_THRESHOLDS_FILE.toPath())) {
-
-            stream.forEach(line -> {
-                String[] tokens = line.split("\t");
-                if ((!tokens[1].equals(notApplicable)) && (!tokens[2].equals(notApplicable))) {
-                    zCallThresholds.put(tokens[0], new String[]{tokens[1], tokens[2]});
-                } else {
-                    zCallThresholds.put(tokens[0], new String[]{dot, dot});
-                }
-            });
-
-        } catch (IOException e) {
-            throw new PicardException("Error parsing ZCall Thresholds File", e);
         }
     }
 
@@ -423,11 +387,6 @@ public class GtcToVcf extends CommandLineProgram {
                 builder.attribute(InfiniumVcfFields.MEAN_Y[InfiniumVcfFields.GENOTYPE_VALUES.AA.ordinal()], formatFloatForVcf(aaVals.meanY));
                 builder.attribute(InfiniumVcfFields.MEAN_Y[InfiniumVcfFields.GENOTYPE_VALUES.AB.ordinal()], formatFloatForVcf(abVals.meanY));
                 builder.attribute(InfiniumVcfFields.MEAN_Y[InfiniumVcfFields.GENOTYPE_VALUES.BB.ordinal()], formatFloatForVcf(bbVals.meanY));
-                if (zCallThresholds.containsKey(egtFile.rsNames[egtIndex])) {
-                    String[] zThresh = zCallThresholds.get(egtFile.rsNames[egtIndex]);
-                    builder.attribute(InfiniumVcfFields.ZTHRESH_X, zThresh[0]);
-                    builder.attribute(InfiniumVcfFields.ZTHRESH_Y, zThresh[1]);
-                }
                 final String rsid = record.getRsId();
                 if (StringUtils.isNotEmpty(rsid)) {
                     builder.attribute(InfiniumVcfFields.RS_ID, rsid);
@@ -534,7 +493,7 @@ public class GtcToVcf extends CommandLineProgram {
 
     private String formatFloatForVcf(final float value) {
         if (Float.isNaN(value)) {
-            return dot;
+            return DOT;
         }
         return df.format(value);
     }
@@ -579,7 +538,7 @@ public class GtcToVcf extends CommandLineProgram {
         lines.add(new VCFHeaderLine("fileDate", new Date().toString()));
         lines.add(new VCFHeaderLine("source", "BPM file"));
         final String descriptorFileName = manifest.getDescriptorFileName();
-        lines.add(new VCFHeaderLine(InfiniumVcfFields.ARRAY_TYPE, descriptorFileName.substring(0, descriptorFileName.lastIndexOf(dot))));
+        lines.add(new VCFHeaderLine(InfiniumVcfFields.ARRAY_TYPE, descriptorFileName.substring(0, descriptorFileName.lastIndexOf(DOT))));
         lines.add(new VCFHeaderLine(InfiniumVcfFields.EXTENDED_ILLUMINA_MANIFEST_FILE, EXTENDED_ILLUMINA_MANIFEST.getName()));
         lines.add(new VCFHeaderLine(InfiniumVcfFields.EXTENDED_ILLUMINA_MANIFEST_VERSION, manifest.getExtendedManifestVersion()));
 
@@ -612,13 +571,7 @@ public class GtcToVcf extends CommandLineProgram {
         lines.add(new VCFHeaderLine(InfiniumVcfFields.MANIFEST_FILE, descriptorFileName));
         lines.add(new VCFHeaderLine("content", manifest.getManifestFile().getName()));
         lines.add(new VCFHeaderLine(InfiniumVcfFields.AUTOCALL_VERSION, gtcFile.getAutoCallVersion()));
-        if (ZCALL_VERSION != null) {
-            lines.add(new VCFHeaderLine(InfiniumVcfFields.ZCALL_VERSION, ZCALL_VERSION));
-        }
-        if (ZCALL_THRESHOLDS_FILE != null)
-            lines.add(new VCFHeaderLine(InfiniumVcfFields.ZCALL_THRESHOLDS, ZCALL_THRESHOLDS_FILE.getName()));
         lines.add(new VCFHeaderLine("reference", reference.getAbsolutePath()));
-        lines.add(new VCFHeaderLine(InfiniumVcfFields.GENOME_BUILD, "HG19"));
         lines.add(new VCFHeaderLine("picardVersion", this.getVersion()));
         lines.add(new VCFHeaderLine(InfiniumVcfFields.P_95_RED, String.valueOf(gtcFile.getP95Red())));
         lines.add(new VCFHeaderLine(InfiniumVcfFields.P_95_GREEN, String.valueOf(gtcFile.getP95Green())));
@@ -661,8 +614,6 @@ public class GtcToVcf extends CommandLineProgram {
             lines.add(new VCFInfoHeaderLine(InfiniumVcfFields.MEAN_X[gtValue.ordinal()], 1, VCFHeaderLineType.Float, "Mean of normalized X for " + gtValue.name() +" cluster"));
             lines.add(new VCFInfoHeaderLine(InfiniumVcfFields.MEAN_Y[gtValue.ordinal()], 1, VCFHeaderLineType.Float, "Mean of normalized Y for " + gtValue.name() +" cluster"));
         }
-        lines.add(new VCFInfoHeaderLine(InfiniumVcfFields.ZTHRESH_X, 1, VCFHeaderLineType.Float, "zCall X threshold"));
-        lines.add(new VCFInfoHeaderLine(InfiniumVcfFields.ZTHRESH_Y, 1, VCFHeaderLineType.Float, "zCall Y threshold"));
         lines.add(new VCFInfoHeaderLine(InfiniumVcfFields.RS_ID, 1, VCFHeaderLineType.String, "dbSNP rs ID"));
 
         lines.add(new VCFFilterHeaderLine(InfiniumVcfFields.DUPE, "Duplicate assays position."));
