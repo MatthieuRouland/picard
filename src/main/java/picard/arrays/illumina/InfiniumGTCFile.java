@@ -75,6 +75,7 @@ public class InfiniumGTCFile extends InfiniumDataFile {
 
     private static final int NUM_ALLELES = 2;
     private static final int NO_CALL_CHAR = (int) '-';      // Used for string representation of no-call "--"
+    private static final int IDENTIFIER_LENGTH = 3;
     private static final String GTC_IDENTIFIER = "gtc";
 
     private final InfiniumNormalizationManifest normalizationManifest;
@@ -183,12 +184,12 @@ public class InfiniumGTCFile extends InfiniumDataFile {
         stream.mark(0);
 
         try {
-            final byte[] curIdentifier = new byte[3];
+            final byte[] curIdentifier = new byte[IDENTIFIER_LENGTH];
             for (int i = 0; i < curIdentifier.length; i++) {
                 curIdentifier[i] = stream.readByte();
             }
 
-            String identifier = new String(curIdentifier);
+            final String identifier = new String(curIdentifier);
             setIdentifier(identifier);
             if (!identifier.equals(GTC_IDENTIFIER)) {
                 throw new PicardException("Invalid identifier '" + identifier + "' for GTC file");
@@ -221,10 +222,10 @@ public class InfiniumGTCFile extends InfiniumDataFile {
 
         final int[] normIds = normalizationManifest.getNormIds();
         for (int i = 0; i < rawXIntensities.length; i++) {
-            int rawX = rawXIntensities[i];
-            int rawY = rawYIntensities[i];
+            final int rawX = rawXIntensities[i];
+            final int rawY = rawYIntensities[i];
 
-            int normId;
+            final int normId;
             int normIndex = -1;
             if ((normIds != null) && (normIds.length > i)) {
                 normId = normIds[i];
@@ -233,9 +234,9 @@ public class InfiniumGTCFile extends InfiniumDataFile {
 
             if (normIndex != -1) {
                 final InfiniumTransformation xform = normalizationTransformations[normIndex];
-                float tempX = rawX - xform.getOffsetX();
-                float tempY = rawY - xform.getOffsetY();
-                float theta = xform.getTheta();
+                final float tempX = rawX - xform.getOffsetX();
+                final float tempY = rawY - xform.getOffsetY();
+                final float theta = xform.getTheta();
                 double tempX2 = Math.cos(theta) * tempX + Math.sin(theta) * tempY;
                 double tempY2 = -Math.sin(theta) * tempX + Math.cos(theta) * tempY;
                 double tempX3 = tempX2 - xform.getShear() * tempY2;
