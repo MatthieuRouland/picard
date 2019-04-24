@@ -54,8 +54,8 @@ public enum Sex {
      */
     public static Sex fromString(String sexString) {
         final Predicate<Sex> match =
-                s -> sexString.equalsIgnoreCase(s.name)
-                        ||   sexString.equalsIgnoreCase(s.name());
+                s -> sexString.equalsIgnoreCase(s.symbol)
+                ||   sexString.equalsIgnoreCase(s.name);
         final List<Sex> genders = Stream.of(Sex.values()).filter(match).collect(Collectors.toList());
         if (genders.size() == 1) return genders.get(0);
         throw new PicardException("Unrecognized sex string: " + sexString);
