@@ -67,6 +67,8 @@ public class InfiniumEGTFile extends InfiniumDataFile {
 
     public String manifestName;
 
+    public int numCodes;
+
     public Map<String, Integer> rsNameToIndex;
 
 
@@ -91,7 +93,7 @@ public class InfiniumEGTFile extends InfiniumDataFile {
         }
 
         manifestName = parseString();
-        final int numCodes = parseInt();
+        numCodes = parseInt();
 
         initializeArrays(numCodes);
 
@@ -137,7 +139,7 @@ public class InfiniumEGTFile extends InfiniumDataFile {
         }
     }
 
-    private void initializeArrays(int numCodes) {
+    protected void initializeArrays(int numCodes) {
 
         nAA = new int[numCodes];
         nAB = new int[numCodes];

@@ -73,10 +73,14 @@ public class InfiniumGTCFile extends InfiniumDataFile {
     private static final int INTENSITY_Y_PERCENTILES = 1015;
     private static final int SENTRIX_ID = 1016;
 
-    private static final int NUM_ALLELES = 2;
     private static final int NO_CALL_CHAR = (int) '-';      // Used for string representation of no-call "--"
     private static final int IDENTIFIER_LENGTH = 3;
     private static final String GTC_IDENTIFIER = "gtc";
+
+    public static final byte NO_CALL = 0;
+    public static final byte AA_CALL = 1;
+    public static final byte AB_CALL = 2;
+    public static final byte BB_CALL = 3;
 
     private final InfiniumNormalizationManifest normalizationManifest;
 
@@ -92,12 +96,13 @@ public class InfiniumGTCFile extends InfiniumDataFile {
     private String imagingDate;
     private String autoCallDate;
     private String autoCallVersion;
+
     private InfiniumTransformation[] normalizationTransformations;
     private int[] rawControlXIntensities;
     private int[] rawControlYIntensities;
     private int[] rawXIntensities;
     private int[] rawYIntensities;
-    private byte[][] genotypes;
+    private byte[] genotypeBytes;
     private float[] genotypeScores;
     private float[] bAlleleFreqs;
     private float[] logRRatios;
@@ -327,7 +332,7 @@ public class InfiniumGTCFile extends InfiniumDataFile {
                 rawYIntensities = parseUnsignedShortArray(toc);
                 break;
             case GENOTYPES:
-                genotypes = parseGenotypes(toc);
+                genotypeBytes = parseGenotypes(toc);
                 break;
             case BASE_CALLS:
                 baseCalls = parseBaseCalls(toc);
@@ -402,44 +407,32 @@ public class InfiniumGTCFile extends InfiniumDataFile {
      * Utility method for parsing out the genotypes (NC for no call)
      *
      * @param toc The table of contents record for parsing the genotypes.
-     * @return A string array containing all of the genotype values.
+     * @return A byte array containing all of the genotype values.
      * @throws IOException is thrown when there is a problem reading the stream.
      */
-    private byte[][] parseGenotypes(final InfiniumFileTOC toc) throws IOException {
+    private byte[] parseGenotypes(final InfiniumFileTOC toc) throws IOException {
         final byte[] genotypeBytes = parseByteArray(toc);
-        final byte[][] genotypeStrings = new byte[genotypeBytes.length][];
 
-        for (int i = 0; i < genotypeBytes.length; i++) {
-            genotypeStrings[i] = new byte[NUM_ALLELES];
-
-            final byte genotypeByte = genotypeBytes[i];
+        for (byte genotypeByte : genotypeBytes) {
             switch (genotypeByte) {
                 case 0: {
-                    genotypeStrings[i][0] = 'N';
-                    genotypeStrings[i][1] = 'C';
                     break;
                 }
                 case 1: {
-                    genotypeStrings[i][0] = 'A';
-                    genotypeStrings[i][1] = 'A';
                     aaCalls++;
                     break;
                 }
                 case 2: {
-                    genotypeStrings[i][0] = 'A';
-                    genotypeStrings[i][1] = 'B';
                     abCalls++;
                     break;
                 }
                 case 3: {
-                    genotypeStrings[i][0] = 'B';
-                    genotypeStrings[i][1] = 'B';
                     bbCalls++;
                     break;
                 }
             }
         }
-        return genotypeStrings;
+        return genotypeBytes;
     }
 
     /**
@@ -503,23 +496,19 @@ public class InfiniumGTCFile extends InfiniumDataFile {
         calculateStatistics();
     }
 
-    /**
-     * Pulls out a string used for fingerprint comparison given an array of indices.
-     *
-     * @param fpIndices The SNP indices for fingerprinting SNPs
-     * @return A string representing the sample fingerprint.
-     */
-    public String getFingerprintString(final Integer[] fpIndices) {
-        final StringBuilder fpString = new StringBuilder();
-        for (Integer curInt : fpIndices) {
-            //gender SNP
-            if (curInt == -1) {
-                fpString.append("NC");
-            } else {
-                fpString.append(new String(baseCalls[curInt]));
-            }
-        }
-        return fpString.toString();
+    public InfiniumGTCRecord getRecord(int index) {
+        return new InfiniumGTCRecord(
+                rawXIntensities[index],
+                rawYIntensities[index],
+                genotypeBytes[index],
+                genotypeScores[index],
+                normalizedXIntensities[index],
+                normalizedYIntensities[index],
+                RIlmn[index],
+                thetaIlmn[index],
+                bAlleleFreqs[index],
+                logRRatios[index]
+        );
     }
 
     public double getHetPercent() {
@@ -566,18 +555,6 @@ public class InfiniumGTCFile extends InfiniumDataFile {
         return rawControlYIntensities;
     }
 
-    public float[] getGenotypeScores() {
-        return genotypeScores;
-    }
-
-    public float[] getbAlleleFreqs() {
-        return bAlleleFreqs;
-    }
-
-    public float[] getLogRRatios() {
-        return logRRatios;
-    }
-
     public String getScannerName() {
         return scannerName;
     }
@@ -610,54 +587,12 @@ public class InfiniumGTCFile extends InfiniumDataFile {
         return numberOfSnps;
     }
 
-    public void setGenotypes(byte[][] genotypes) {
-        this.genotypes = genotypes;
-    }
-
-    public byte[] getGenotype(int index) {
-        return genotypes[index];
-    }
-
     public int getNumCalls() {
         return numCalls;
     }
 
     public int getNumNoCalls() {
         return numNoCalls;
-    }
-
-    public float getGenotypeScore(int index) {
-        return genotypeScores[index];
-    }
-
-    public int getRawXIntensity(int index) {
-        return rawXIntensities[index];
-    }
-
-    public int getRawYIntensity(int index) {
-        return rawYIntensities[index];
-    }
-
-    public float getNormalizedXIntensity(int index) { return normalizedXIntensities[index]; }
-
-    public float getNormalizedYIntensity(int index) {
-        return normalizedYIntensities[index];
-    }
-
-    public float getRIlmn(int index) {
-        return RIlmn[index];
-    }
-
-    public float getThetaIlmn(int index) {
-        return thetaIlmn[index];
-    }
-
-    public float getBAlleleFreq(int index) {
-        return bAlleleFreqs[index];
-    }
-
-    public float getLogRratiosIlmn(int index) {
-        return logRRatios[index];
     }
 
     public int getRawControlXIntensity(int index) {
@@ -720,36 +655,8 @@ public class InfiniumGTCFile extends InfiniumDataFile {
         return dx;
     }
 
-    public int[] getRawXIntensities() {
-        return rawXIntensities;
-    }
-
-    public int[] getRawYIntensities() {
-        return rawYIntensities;
-    }
-
-    public byte[][] getGenotypes() {
-        return genotypes;
-    }
-
     public byte[][] getBaseCalls() {
         return baseCalls;
-    }
-
-    public float[] getNormalizedXIntensities() {
-        return normalizedXIntensities;
-    }
-
-    public float[] getNormalizedYIntensities() {
-        return normalizedYIntensities;
-    }
-
-    public float[] getRIlmn() {
-        return RIlmn;
-    }
-
-    public float[] getThetaIlmn() {
-        return thetaIlmn;
     }
 
     public int getAbCalls() {

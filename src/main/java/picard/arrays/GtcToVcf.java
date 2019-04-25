@@ -30,6 +30,7 @@ import picard.arrays.illumina.ExtendedIlluminaManifestRecord;
 import picard.arrays.illumina.IlluminaManifestRecord;
 import picard.arrays.illumina.InfiniumEGTFile;
 import picard.arrays.illumina.InfiniumGTCFile;
+import picard.arrays.illumina.InfiniumGTCRecord;
 import picard.arrays.illumina.InfiniumNormalizationManifest;
 import picard.arrays.illumina.InfiniumVcfFields;
 import picard.pedigree.Sex;
@@ -101,18 +102,17 @@ public class GtcToVcf extends CommandLineProgram {
                     "<p>A GTC file is an Illumina-specific file containing called genotypes in AA/AB/BB format.</p>" +
                     "<p>A VCF, aka Variant Calling Format, is a text file for storing how a sequenced sample differs from the reference genome. " +
                     "<a href='http://software.broadinstitute.org/software/igv/book/export/html/184'></a></p>" +
-                    "<p>The name of the INPUT must match the name of the EXTENDED_ILLUMINA_MANIFEST, sans file extensions.</p>" +
                     "<h3>Usage example:</h3>" +
                     "<pre>" +
                     "GtcToVcf\n" +
                     "\t--INPUT input.gtc\n" +
                     "\t--REFERENCE_SEQUENCE reference.fasta\n" +
                     "\t--OUTPUT output.vcf\n" +
-                    "\t--EXTENDED_ILLUMINA_MANIFEST input.csv\n" +
+                    "\t--EXTENDED_ILLUMINA_MANIFEST chip_name.extended.csv\n" +
                     "\t--CLUSTER_FILE cluster.egt\n" +
-                    "\t--ILLUMINA_NORMALIZATION_MANIFEST normalization_manifest.bpm.csv\n" +
+                    "\t--ILLUMINA_NORMALIZATION_MANIFEST chip_name.bpm.csv\n" +
                     "\t--SAMPLE_ALIAS my_sample_alias\n" +
-                    "\t--ANALYSIS_VERSION_NUMBER 0\n" +
+                    "\t--ANALYSIS_VERSION_NUMBER 1\n" +
                     "\t--EXPECTED_GENDER UNKNOWN\n" +
                     "\t--GENDER_GTC gender.gtc\n" +
                     "\t--FINGERPRINT_GENOTYPES_VCF_FILE fingerprint_genotypes.vcf" +
@@ -150,7 +150,7 @@ public class GtcToVcf extends CommandLineProgram {
     @Argument(shortName = "FP_VCF", doc = "The fingerprint VCF for this sample", optional = true)
     public File FINGERPRINT_GENOTYPES_VCF_FILE;
 
-    private static final List<Allele> NO_CALL_ALLELES = Collections.unmodifiableList(Arrays.asList(Allele.NO_CALL, Allele.NO_CALL));
+    public static final List<Allele> NO_CALL_ALLELES = Collections.unmodifiableList(Arrays.asList(Allele.NO_CALL, Allele.NO_CALL));
 
     // This file gets initialized during customCommandLineValidation.
     // It is a static member so we don't have to parse the file twice.
@@ -274,7 +274,7 @@ public class GtcToVcf extends CommandLineProgram {
 
     private void fillContexts(final SortingCollection<VariantContext> contexts, final InfiniumGTCFile gtcFile,
                               final ExtendedIlluminaManifest manifest, final InfiniumEGTFile egtFile) {
-        final ProgressLogger progress = new ProgressLogger(log, 100000, "sorted");
+        final ProgressLogger progressLogger = new ProgressLogger(log, 100000, "sorted");
 
         final Iterator<ExtendedIlluminaManifestRecord> iterator = manifest.extendedIterator();
         int gtcIndex = 0;
@@ -285,124 +285,10 @@ public class GtcToVcf extends CommandLineProgram {
             final ExtendedIlluminaManifestRecord record = iterator.next();
 
             if (!record.isBad()) {
-                // If the record is not flagged as errant in the manifest we include it in the VCF
-                Allele A = record.getAlleleA();
-                Allele B = record.getAlleleB();
-                Allele ref = record.getRefAllele();
-
-                //if A, B and ref are all . then parse the alleles from the probeSeq
-                if (A.isNoCall() && B.isNoCall() && ref.isNoCall()) {
-                    final String sourceSeq = record.getSourceSeq();
-                    final String alleles = sourceSeq.substring(sourceSeq.indexOf('['), sourceSeq.lastIndexOf(']') + 1);
-                    if (alleles.charAt(1) == '-') {
-                        A = Allele.SPAN_DEL;
-                        B = ref = Allele.create(alleles.substring(alleles.indexOf("/") + 1, alleles.lastIndexOf(']')), true);
-                    } else {
-                        A = ref = Allele.create(alleles.substring(alleles.indexOf("[") + 1, alleles.lastIndexOf('/')), true);
-                        B = Allele.create(alleles.substring(alleles.indexOf("/") + 1, alleles.lastIndexOf(']')));
-                    }
-                }
-
-                final String chr = record.getB37Chr();
-                final Integer position = record.getB37Pos();
-                final Integer endPosition = position + ref.length() - 1;
-                Integer egtIndex = egtFile.rsNameToIndex.get(record.getName());
-                if (egtIndex == null) {
-                    throw new PicardException("Found no record in cluster file for manifest entry '" + record.getName() + "'");
-                }
-
-                progress.record(chr, position);
-
-                // Create list of unique alleles
-                final List<Allele> assayAlleles = new ArrayList<>();
-                assayAlleles.add(ref);
-
-                if (!ref.equals(A, true)) {
-                    assayAlleles.add(A);
-                }
-
-                if (!ref.equals(B, true)) {
-                    assayAlleles.add(B);
-                }
-
-                final Genotype genotype = getGenotype(gtcFile, record, gtcIndex, A, B);
-
-                final VariantContextBuilder builder = new VariantContextBuilder();
-
-                builder.source(record.getName());
-                builder.chr(chr);
-                builder.start(position);
-                builder.stop(endPosition);
-                builder.alleles(assayAlleles);
-                builder.log10PError(VariantContext.NO_LOG10_PERROR);
-                builder.id(record.getName());
-                builder.genotypes(genotype);
-
-                VariantContextUtils.calculateChromosomeCounts(builder, false);
-
-                //custom info fields
-                builder.attribute(InfiniumVcfFields.ALLELE_A, record.getAlleleA());
-                builder.attribute(InfiniumVcfFields.ALLELE_B, record.getAlleleB());
-                builder.attribute(InfiniumVcfFields.ILLUMINA_STRAND, record.getIlmnStrand());
-                builder.attribute(InfiniumVcfFields.PROBE_A, record.getAlleleAProbeSeq());
-                builder.attribute(InfiniumVcfFields.PROBE_B, record.getAlleleBProbeSeq());
-                builder.attribute(InfiniumVcfFields.BEADSET_ID, record.getBeadSetId());
-                builder.attribute(InfiniumVcfFields.ILLUMINA_CHR, record.getChr());
-                builder.attribute(InfiniumVcfFields.ILLUMINA_POS, record.getPosition());
-                builder.attribute(InfiniumVcfFields.ILLUMINA_BUILD, record.getGenomeBuild());
-                builder.attribute(InfiniumVcfFields.SOURCE, record.getSource().replace(' ', '_'));
-                builder.attribute(InfiniumVcfFields.GC_SCORE, formatFloatForVcf(egtFile.totalScore[egtIndex]));
-                builder.attribute(InfiniumVcfFields.N[InfiniumVcfFields.GENOTYPE_VALUES.AA.ordinal()], egtFile.nAA[egtIndex]);
-                builder.attribute(InfiniumVcfFields.N[InfiniumVcfFields.GENOTYPE_VALUES.AB.ordinal()], egtFile.nAB[egtIndex]);
-                builder.attribute(InfiniumVcfFields.N[InfiniumVcfFields.GENOTYPE_VALUES.BB.ordinal()], egtFile.nBB[egtIndex]);
-                builder.attribute(InfiniumVcfFields.DEV_R[InfiniumVcfFields.GENOTYPE_VALUES.AA.ordinal()], formatFloatForVcf(egtFile.devRAA[egtIndex]));
-                builder.attribute(InfiniumVcfFields.DEV_R[InfiniumVcfFields.GENOTYPE_VALUES.AB.ordinal()], formatFloatForVcf(egtFile.devRAB[egtIndex]));
-                builder.attribute(InfiniumVcfFields.DEV_R[InfiniumVcfFields.GENOTYPE_VALUES.BB.ordinal()], formatFloatForVcf(egtFile.devRBB[egtIndex]));
-                builder.attribute(InfiniumVcfFields.MEAN_R[InfiniumVcfFields.GENOTYPE_VALUES.AA.ordinal()], formatFloatForVcf(egtFile.meanRAA[egtIndex]));
-                builder.attribute(InfiniumVcfFields.MEAN_R[InfiniumVcfFields.GENOTYPE_VALUES.AB.ordinal()], formatFloatForVcf(egtFile.meanRAB[egtIndex]));
-                builder.attribute(InfiniumVcfFields.MEAN_R[InfiniumVcfFields.GENOTYPE_VALUES.BB.ordinal()], formatFloatForVcf(egtFile.meanRBB[egtIndex]));
-                builder.attribute(InfiniumVcfFields.DEV_THETA[InfiniumVcfFields.GENOTYPE_VALUES.AA.ordinal()], formatFloatForVcf(egtFile.devThetaAA[egtIndex]));
-                builder.attribute(InfiniumVcfFields.DEV_THETA[InfiniumVcfFields.GENOTYPE_VALUES.AB.ordinal()], formatFloatForVcf(egtFile.devThetaAB[egtIndex]));
-                builder.attribute(InfiniumVcfFields.DEV_THETA[InfiniumVcfFields.GENOTYPE_VALUES.BB.ordinal()], formatFloatForVcf(egtFile.devThetaBB[egtIndex]));
-                builder.attribute(InfiniumVcfFields.MEAN_THETA[InfiniumVcfFields.GENOTYPE_VALUES.AA.ordinal()], formatFloatForVcf(egtFile.meanThetaAA[egtIndex]));
-                builder.attribute(InfiniumVcfFields.MEAN_THETA[InfiniumVcfFields.GENOTYPE_VALUES.AB.ordinal()], formatFloatForVcf(egtFile.meanThetaAB[egtIndex]));
-                builder.attribute(InfiniumVcfFields.MEAN_THETA[InfiniumVcfFields.GENOTYPE_VALUES.BB.ordinal()], formatFloatForVcf(egtFile.meanThetaBB[egtIndex]));
-
-                EuclideanValues aaVals = polarToEuclidean(egtFile.meanRAA[egtIndex], egtFile.devRAA[egtIndex],
-                        egtFile.meanThetaAA[egtIndex], egtFile.devThetaAA[egtIndex]);
-                EuclideanValues abVals = polarToEuclidean(egtFile.meanRAB[egtIndex], egtFile.devRAB[egtIndex],
-                        egtFile.meanThetaAB[egtIndex], egtFile.devThetaAB[egtIndex]);
-                EuclideanValues bbVals = polarToEuclidean(egtFile.meanRBB[egtIndex], egtFile.devRBB[egtIndex],
-                        egtFile.meanThetaBB[egtIndex], egtFile.devThetaBB[egtIndex]);
-
-                builder.attribute(InfiniumVcfFields.DEV_X[InfiniumVcfFields.GENOTYPE_VALUES.AA.ordinal()], formatFloatForVcf(aaVals.devX));
-                builder.attribute(InfiniumVcfFields.DEV_X[InfiniumVcfFields.GENOTYPE_VALUES.AB.ordinal()], formatFloatForVcf(abVals.devX));
-                builder.attribute(InfiniumVcfFields.DEV_X[InfiniumVcfFields.GENOTYPE_VALUES.BB.ordinal()], formatFloatForVcf(bbVals.devX));
-                builder.attribute(InfiniumVcfFields.MEAN_X[InfiniumVcfFields.GENOTYPE_VALUES.AA.ordinal()], formatFloatForVcf(aaVals.meanX));
-                builder.attribute(InfiniumVcfFields.MEAN_X[InfiniumVcfFields.GENOTYPE_VALUES.AB.ordinal()], formatFloatForVcf(abVals.meanX));
-                builder.attribute(InfiniumVcfFields.MEAN_X[InfiniumVcfFields.GENOTYPE_VALUES.BB.ordinal()], formatFloatForVcf(bbVals.meanX));
-                builder.attribute(InfiniumVcfFields.DEV_Y[InfiniumVcfFields.GENOTYPE_VALUES.AA.ordinal()], formatFloatForVcf(aaVals.devY));
-                builder.attribute(InfiniumVcfFields.DEV_Y[InfiniumVcfFields.GENOTYPE_VALUES.AB.ordinal()], formatFloatForVcf(abVals.devY));
-                builder.attribute(InfiniumVcfFields.DEV_Y[InfiniumVcfFields.GENOTYPE_VALUES.BB.ordinal()], formatFloatForVcf(bbVals.devY));
-                builder.attribute(InfiniumVcfFields.MEAN_Y[InfiniumVcfFields.GENOTYPE_VALUES.AA.ordinal()], formatFloatForVcf(aaVals.meanY));
-                builder.attribute(InfiniumVcfFields.MEAN_Y[InfiniumVcfFields.GENOTYPE_VALUES.AB.ordinal()], formatFloatForVcf(abVals.meanY));
-                builder.attribute(InfiniumVcfFields.MEAN_Y[InfiniumVcfFields.GENOTYPE_VALUES.BB.ordinal()], formatFloatForVcf(bbVals.meanY));
-                final String rsid = record.getRsId();
-                if (StringUtils.isNotEmpty(rsid)) {
-                    builder.attribute(InfiniumVcfFields.RS_ID, rsid);
-                }
-                if (egtFile.totalScore[egtIndex] == 0.0) {
-                    builder.filter(InfiniumVcfFields.ZEROED_OUT_ASSAY);
-                    if (genotype.isCalled()) {
-                        throw new PicardException("Found a call on a zeroed out SNP!!");
-                    }
-                }
-                if (record.isDupe()) {
-                    builder.filter(InfiniumVcfFields.DUPE);
-                }
-
+                InfiniumGTCRecord gtcRecord = gtcFile.getRecord(gtcIndex);
+                VariantContext context = makeVariantContext(record, gtcRecord, egtFile, progressLogger);
                 numVariantsWritten++;
-                contexts.add(builder.make());
+                contexts.add(context);
             }
             gtcIndex++;
         }
@@ -410,6 +296,127 @@ public class GtcToVcf extends CommandLineProgram {
         log.info(numVariantsWritten + " Variants were written to file");
         log.info(gtcFile.getNumberOfSnps() + " SNPs in the GTC file");
         log.info(manifest.getNumAssays() + " Variants on the " + manifest.getDescriptorFileName() + " genotyping array manifest file");
+    }
+
+    protected VariantContext makeVariantContext(ExtendedIlluminaManifestRecord record, final InfiniumGTCRecord gtcRecord,
+                                                final InfiniumEGTFile egtFile, final ProgressLogger progressLogger) {
+        // If the record is not flagged as errant in the manifest we include it in the VCF
+        Allele A = record.getAlleleA();
+        Allele B = record.getAlleleB();
+        Allele ref = record.getRefAllele();
+
+        //if A, B and ref are all . then parse the alleles from the probeSeq
+        if (A.isNoCall() && B.isNoCall() && ref.isNoCall()) {
+            final String sourceSeq = record.getSourceSeq();
+            final String alleles = sourceSeq.substring(sourceSeq.indexOf('['), sourceSeq.lastIndexOf(']') + 1);
+            if (alleles.charAt(1) == '-') {
+                A = Allele.SPAN_DEL;
+                B = ref = Allele.create(alleles.substring(alleles.indexOf("/") + 1, alleles.lastIndexOf(']')), true);
+            } else {
+                A = ref = Allele.create(alleles.substring(alleles.indexOf("[") + 1, alleles.lastIndexOf('/')), true);
+                B = Allele.create(alleles.substring(alleles.indexOf("/") + 1, alleles.lastIndexOf(']')));
+            }
+        }
+
+        final String chr = record.getB37Chr();
+        final Integer position = record.getB37Pos();
+        final Integer endPosition = position + ref.length() - 1;
+        Integer egtIndex = egtFile.rsNameToIndex.get(record.getName());
+        if (egtIndex == null) {
+            throw new PicardException("Found no record in cluster file for manifest entry '" + record.getName() + "'");
+        }
+
+        progressLogger.record(chr, position);
+
+        // Create list of unique alleles
+        final List<Allele> assayAlleles = new ArrayList<>();
+        assayAlleles.add(ref);
+
+        if (!ref.equals(A, true)) {
+            assayAlleles.add(A);
+        }
+
+        if (!ref.equals(B, true)) {
+            assayAlleles.add(B);
+        }
+
+        final String sampleName = FilenameUtils.removeExtension(INPUT.getName());
+        final Genotype genotype = getGenotype(sampleName, gtcRecord, record, A, B);
+
+        final VariantContextBuilder builder = new VariantContextBuilder();
+
+        builder.source(record.getName());
+        builder.chr(chr);
+        builder.start(position);
+        builder.stop(endPosition);
+        builder.alleles(assayAlleles);
+        builder.log10PError(VariantContext.NO_LOG10_PERROR);
+        builder.id(record.getName());
+        builder.genotypes(genotype);
+
+        VariantContextUtils.calculateChromosomeCounts(builder, false);
+
+        //custom info fields
+        builder.attribute(InfiniumVcfFields.ALLELE_A, record.getAlleleA());
+        builder.attribute(InfiniumVcfFields.ALLELE_B, record.getAlleleB());
+        builder.attribute(InfiniumVcfFields.ILLUMINA_STRAND, record.getIlmnStrand());
+        builder.attribute(InfiniumVcfFields.PROBE_A, record.getAlleleAProbeSeq());
+        builder.attribute(InfiniumVcfFields.PROBE_B, record.getAlleleBProbeSeq());
+        builder.attribute(InfiniumVcfFields.BEADSET_ID, record.getBeadSetId());
+        builder.attribute(InfiniumVcfFields.ILLUMINA_CHR, record.getChr());
+        builder.attribute(InfiniumVcfFields.ILLUMINA_POS, record.getPosition());
+        builder.attribute(InfiniumVcfFields.ILLUMINA_BUILD, record.getGenomeBuild());
+        builder.attribute(InfiniumVcfFields.SOURCE, record.getSource().replace(' ', '_'));
+        builder.attribute(InfiniumVcfFields.GC_SCORE, formatFloatForVcf(egtFile.totalScore[egtIndex]));
+        builder.attribute(InfiniumVcfFields.N[InfiniumVcfFields.GENOTYPE_VALUES.AA.ordinal()], egtFile.nAA[egtIndex]);
+        builder.attribute(InfiniumVcfFields.N[InfiniumVcfFields.GENOTYPE_VALUES.AB.ordinal()], egtFile.nAB[egtIndex]);
+        builder.attribute(InfiniumVcfFields.N[InfiniumVcfFields.GENOTYPE_VALUES.BB.ordinal()], egtFile.nBB[egtIndex]);
+        builder.attribute(InfiniumVcfFields.DEV_R[InfiniumVcfFields.GENOTYPE_VALUES.AA.ordinal()], formatFloatForVcf(egtFile.devRAA[egtIndex]));
+        builder.attribute(InfiniumVcfFields.DEV_R[InfiniumVcfFields.GENOTYPE_VALUES.AB.ordinal()], formatFloatForVcf(egtFile.devRAB[egtIndex]));
+        builder.attribute(InfiniumVcfFields.DEV_R[InfiniumVcfFields.GENOTYPE_VALUES.BB.ordinal()], formatFloatForVcf(egtFile.devRBB[egtIndex]));
+        builder.attribute(InfiniumVcfFields.MEAN_R[InfiniumVcfFields.GENOTYPE_VALUES.AA.ordinal()], formatFloatForVcf(egtFile.meanRAA[egtIndex]));
+        builder.attribute(InfiniumVcfFields.MEAN_R[InfiniumVcfFields.GENOTYPE_VALUES.AB.ordinal()], formatFloatForVcf(egtFile.meanRAB[egtIndex]));
+        builder.attribute(InfiniumVcfFields.MEAN_R[InfiniumVcfFields.GENOTYPE_VALUES.BB.ordinal()], formatFloatForVcf(egtFile.meanRBB[egtIndex]));
+        builder.attribute(InfiniumVcfFields.DEV_THETA[InfiniumVcfFields.GENOTYPE_VALUES.AA.ordinal()], formatFloatForVcf(egtFile.devThetaAA[egtIndex]));
+        builder.attribute(InfiniumVcfFields.DEV_THETA[InfiniumVcfFields.GENOTYPE_VALUES.AB.ordinal()], formatFloatForVcf(egtFile.devThetaAB[egtIndex]));
+        builder.attribute(InfiniumVcfFields.DEV_THETA[InfiniumVcfFields.GENOTYPE_VALUES.BB.ordinal()], formatFloatForVcf(egtFile.devThetaBB[egtIndex]));
+        builder.attribute(InfiniumVcfFields.MEAN_THETA[InfiniumVcfFields.GENOTYPE_VALUES.AA.ordinal()], formatFloatForVcf(egtFile.meanThetaAA[egtIndex]));
+        builder.attribute(InfiniumVcfFields.MEAN_THETA[InfiniumVcfFields.GENOTYPE_VALUES.AB.ordinal()], formatFloatForVcf(egtFile.meanThetaAB[egtIndex]));
+        builder.attribute(InfiniumVcfFields.MEAN_THETA[InfiniumVcfFields.GENOTYPE_VALUES.BB.ordinal()], formatFloatForVcf(egtFile.meanThetaBB[egtIndex]));
+
+        EuclideanValues aaVals = polarToEuclidean(egtFile.meanRAA[egtIndex], egtFile.devRAA[egtIndex],
+                egtFile.meanThetaAA[egtIndex], egtFile.devThetaAA[egtIndex]);
+        EuclideanValues abVals = polarToEuclidean(egtFile.meanRAB[egtIndex], egtFile.devRAB[egtIndex],
+                egtFile.meanThetaAB[egtIndex], egtFile.devThetaAB[egtIndex]);
+        EuclideanValues bbVals = polarToEuclidean(egtFile.meanRBB[egtIndex], egtFile.devRBB[egtIndex],
+                egtFile.meanThetaBB[egtIndex], egtFile.devThetaBB[egtIndex]);
+
+        builder.attribute(InfiniumVcfFields.DEV_X[InfiniumVcfFields.GENOTYPE_VALUES.AA.ordinal()], formatFloatForVcf(aaVals.devX));
+        builder.attribute(InfiniumVcfFields.DEV_X[InfiniumVcfFields.GENOTYPE_VALUES.AB.ordinal()], formatFloatForVcf(abVals.devX));
+        builder.attribute(InfiniumVcfFields.DEV_X[InfiniumVcfFields.GENOTYPE_VALUES.BB.ordinal()], formatFloatForVcf(bbVals.devX));
+        builder.attribute(InfiniumVcfFields.MEAN_X[InfiniumVcfFields.GENOTYPE_VALUES.AA.ordinal()], formatFloatForVcf(aaVals.meanX));
+        builder.attribute(InfiniumVcfFields.MEAN_X[InfiniumVcfFields.GENOTYPE_VALUES.AB.ordinal()], formatFloatForVcf(abVals.meanX));
+        builder.attribute(InfiniumVcfFields.MEAN_X[InfiniumVcfFields.GENOTYPE_VALUES.BB.ordinal()], formatFloatForVcf(bbVals.meanX));
+        builder.attribute(InfiniumVcfFields.DEV_Y[InfiniumVcfFields.GENOTYPE_VALUES.AA.ordinal()], formatFloatForVcf(aaVals.devY));
+        builder.attribute(InfiniumVcfFields.DEV_Y[InfiniumVcfFields.GENOTYPE_VALUES.AB.ordinal()], formatFloatForVcf(abVals.devY));
+        builder.attribute(InfiniumVcfFields.DEV_Y[InfiniumVcfFields.GENOTYPE_VALUES.BB.ordinal()], formatFloatForVcf(bbVals.devY));
+        builder.attribute(InfiniumVcfFields.MEAN_Y[InfiniumVcfFields.GENOTYPE_VALUES.AA.ordinal()], formatFloatForVcf(aaVals.meanY));
+        builder.attribute(InfiniumVcfFields.MEAN_Y[InfiniumVcfFields.GENOTYPE_VALUES.AB.ordinal()], formatFloatForVcf(abVals.meanY));
+        builder.attribute(InfiniumVcfFields.MEAN_Y[InfiniumVcfFields.GENOTYPE_VALUES.BB.ordinal()], formatFloatForVcf(bbVals.meanY));
+        final String rsid = record.getRsId();
+        if (StringUtils.isNotEmpty(rsid)) {
+            builder.attribute(InfiniumVcfFields.RS_ID, rsid);
+        }
+        if (egtFile.totalScore[egtIndex] == 0.0) {
+            builder.filter(InfiniumVcfFields.ZEROED_OUT_ASSAY);
+            if (genotype.isCalled()) {
+                throw new PicardException("Found a call on a zeroed out SNP!!");
+            }
+        }
+        if (record.isDupe()) {
+            builder.filter(InfiniumVcfFields.DUPE);
+        }
+        return builder.make();
     }
 
     //Uses Manhattan distance conversion
@@ -456,42 +463,38 @@ public class GtcToVcf extends CommandLineProgram {
         }
     }
 
-    private Genotype getGenotype(final InfiniumGTCFile infiniumGTCFile,
-                                 final IlluminaManifestRecord record,
-                                 final int index,
-                                 final Allele A,
-                                 final Allele B) {
-        final byte[] genotypeByteArray = infiniumGTCFile.getGenotype(index);
+    public Genotype getGenotype(final String sampleName,
+                                final InfiniumGTCRecord infiniumGtcRecord,
+                                final IlluminaManifestRecord record,
+                                final Allele A,
+                                final Allele B) {
 
         // The Sample Alleles
         final List<Allele> alleles;
 
-        if (genotypeByteArray[0] == 'N' && genotypeByteArray[1] == 'C') alleles = NO_CALL_ALLELES;
-        else if (genotypeByteArray[0] == 'A' && genotypeByteArray[1] == 'A') alleles = Arrays.asList(A, A);
-        else if (genotypeByteArray[0] == 'A' && genotypeByteArray[1] == 'B') alleles = Arrays.asList(A, B);
-        else if (genotypeByteArray[0] == 'B' && genotypeByteArray[1] == 'B') alleles = Arrays.asList(B, B);
+        if (infiniumGtcRecord.genotype == InfiniumGTCFile.NO_CALL) alleles = NO_CALL_ALLELES;
+        else if (infiniumGtcRecord.genotype == InfiniumGTCFile.AA_CALL) alleles = Arrays.asList(A, A);
+        else if (infiniumGtcRecord.genotype == InfiniumGTCFile.AB_CALL) alleles = Arrays.asList(A, B);
+        else if (infiniumGtcRecord.genotype == InfiniumGTCFile.BB_CALL) alleles = Arrays.asList(B, B);
         else {
-            throw new PicardException("Unexpected genotype call [" + genotypeByteArray[0] + "]" +
-                    "[" + genotypeByteArray[1] + "]" + " for SNP: " + record.getName());
+            throw new PicardException("Unexpected genotype call [" + infiniumGtcRecord.genotype + "]" + " for SNP: " + record.getName());
         }
 
         final Map<String, Object> attributes = new HashMap<>();
-        attributes.put(InfiniumVcfFields.IGC, formatFloatForVcf(infiniumGTCFile.getGenotypeScore(index)));
-        attributes.put(InfiniumVcfFields.X, infiniumGTCFile.getRawXIntensity(index));
-        attributes.put(InfiniumVcfFields.Y, infiniumGTCFile.getRawYIntensity(index));
-        attributes.put(InfiniumVcfFields.NORMX, formatFloatForVcf(infiniumGTCFile.getNormalizedXIntensity(index)));
-        attributes.put(InfiniumVcfFields.NORMY, formatFloatForVcf(infiniumGTCFile.getNormalizedYIntensity(index)));
-        attributes.put(InfiniumVcfFields.R, formatFloatForVcf(infiniumGTCFile.getRIlmn(index)));
-        attributes.put(InfiniumVcfFields.THETA, formatFloatForVcf(infiniumGTCFile.getThetaIlmn(index)));
-        attributes.put(InfiniumVcfFields.BAF, formatFloatForVcf(infiniumGTCFile.getBAlleleFreq(index)));
-        attributes.put(InfiniumVcfFields.LRR, formatFloatForVcf(infiniumGTCFile.getLogRratiosIlmn(index)));
-
-        final String sampleName = FilenameUtils.removeExtension(INPUT.getName());
+        attributes.put(InfiniumVcfFields.IGC, formatFloatForVcf(infiniumGtcRecord.genotypeScore));
+        attributes.put(InfiniumVcfFields.X, infiniumGtcRecord.rawXIntensity);
+        attributes.put(InfiniumVcfFields.Y, infiniumGtcRecord.rawYIntensity);
+        attributes.put(InfiniumVcfFields.NORMX, formatFloatForVcf(infiniumGtcRecord.normalizedXIntensity));
+        attributes.put(InfiniumVcfFields.NORMY, formatFloatForVcf(infiniumGtcRecord.normalizedYIntensity));
+        attributes.put(InfiniumVcfFields.R, formatFloatForVcf(infiniumGtcRecord.RIlmn));
+        attributes.put(InfiniumVcfFields.THETA, formatFloatForVcf(infiniumGtcRecord.thetaIlmn));
+        attributes.put(InfiniumVcfFields.BAF, formatFloatForVcf(infiniumGtcRecord.bAlleleFreq));
+        attributes.put(InfiniumVcfFields.LRR, formatFloatForVcf(infiniumGtcRecord.logRRatio));
 
         return GenotypeBuilder.create(sampleName, alleles, attributes);
     }
 
-    private String formatFloatForVcf(final float value) {
+    public static String formatFloatForVcf(final float value) {
         if (Float.isNaN(value)) {
             return DOT;
         }
