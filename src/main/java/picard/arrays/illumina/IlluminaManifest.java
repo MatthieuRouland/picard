@@ -26,6 +26,8 @@ package picard.arrays.illumina;
 
 import htsjdk.samtools.util.IOUtil;
 import htsjdk.samtools.util.Log;
+import org.apache.commons.collections4.BidiMap;
+import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 import picard.PicardException;
 import picard.util.CsvInputParser;
 
@@ -57,16 +59,12 @@ public class IlluminaManifest  {
     public static final String NCBI_36 = "36";
     public static final String NCBI_37 = "37";
 
-    public static final Map<String, String> HG_TO_NCBI = new HashMap<>(3);
-    public static final Map<String, String> NCBI_TO_HG = new HashMap<>(3);
+    public static final BidiMap HG_TO_NCBI = new DualHashBidiMap();
 
     static {
         HG_TO_NCBI.put(HG17, NCBI_35);
         HG_TO_NCBI.put(HG18, NCBI_36);
         HG_TO_NCBI.put(HG19, NCBI_37);
-        NCBI_TO_HG.put(NCBI_35, HG17);
-        NCBI_TO_HG.put(NCBI_36, HG18);
-        NCBI_TO_HG.put(NCBI_37, HG19);
     }
 
     private static final String[] ALLELES_LIST = {"A", "C", "G", "T", "I", "D"};
