@@ -48,7 +48,7 @@ import java.util.Iterator;
  * and then provides an iterator to allow access to the ExtendedIlluminaManifestRecords
  * (currently this only supports iterating over the assay records).
  */
-public class ExtendedIlluminaManifest extends IlluminaManifest {
+public class Build37ExtendedIlluminaManifest extends IlluminaManifest {
 
     private static final String BUILD37_CHR_HEADER_NAME = "build37Chr";
     private static final String BUILD37_POS_HEADER_NAME = "build37Pos";
@@ -82,13 +82,13 @@ public class ExtendedIlluminaManifest extends IlluminaManifest {
         return (String[])ArrayUtils.addAll(super.getAllPossibleHeaderNames(), EXTENDED_MANIFEST_HEADERS);
     }
 
-    public ExtendedIlluminaManifest(final File manifestFile) throws IOException {
+    public Build37ExtendedIlluminaManifest(final File manifestFile) throws IOException {
         super(manifestFile);
     }
 
-    public Iterator<ExtendedIlluminaManifestRecord> extendedIterator() {
+    public Iterator<Build37ExtendedIlluminaManifestRecord> extendedIterator() {
 
-        return new Iterator<ExtendedIlluminaManifestRecord>() {
+        return new Iterator<Build37ExtendedIlluminaManifestRecord>() {
             private int assayCount = 0;
             private int numAssays = getNumAssays();
 
@@ -96,9 +96,9 @@ public class ExtendedIlluminaManifest extends IlluminaManifest {
                 return (assayCount < numAssays) && (manifestFileParser.hasNext()) ;
             }
 
-            public ExtendedIlluminaManifestRecord next() {
+            public Build37ExtendedIlluminaManifestRecord next() {
                 assayCount++;
-                return new ExtendedIlluminaManifestRecord(getAssayHeaderNameToIndex(), manifestFileParser.next(), assayCount - 1);
+                return new Build37ExtendedIlluminaManifestRecord(getAssayHeaderNameToIndex(), manifestFileParser.next(), assayCount - 1);
             }
 
             public void remove() {

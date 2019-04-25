@@ -45,7 +45,7 @@ import java.util.regex.Pattern;
 /**
  * A class to represent a record (line) from an Extended Illumina Manifest [Assay] entry
  */
-public class ExtendedIlluminaManifestRecord extends IlluminaManifestRecord {
+public class Build37ExtendedIlluminaManifestRecord extends IlluminaManifestRecord {
     protected enum Flag {
         ILLUMINA_FLAGGED,   // Illumina flagged
         LIFTOVER_FAILED,
@@ -71,7 +71,7 @@ public class ExtendedIlluminaManifestRecord extends IlluminaManifestRecord {
 
     private Strand calculatedStrand;
 
-    private final Log log = Log.getInstance(ExtendedIlluminaManifestRecord.class);
+    private final Log log = Log.getInstance(Build37ExtendedIlluminaManifestRecord.class);
 
     private static final String SRC_SEQ_REGEX = "([AGTCagtc]*)\\[([AGTCagtc-])\\/([AGTC]*)\\]([agtcAGTC]*)";
     // Symbolics for the regex groups...
@@ -80,15 +80,15 @@ public class ExtendedIlluminaManifestRecord extends IlluminaManifestRecord {
     private static final int SRC_SEQ_SECOND_VARIANT_SEQUENCE = 3;
     private static final int SRC_SEQ_SEQUENCE_AFTER_VARIANT  = 4;
 
-    private static String build36 = "36";
-    private static String build37 = "37";
+    private static String BUILD_36 = "36";
+    private static String BUILD_37 = "37";
     public static final Pattern pattern = Pattern.compile(SRC_SEQ_REGEX);
 
     /**
-     * This constructor is used to read records from an already created ExtendedIlluminaManifestRecord file.
+     * This constructor is used to read records from an already created Build37ExtendedIlluminaManifestRecord file.
      * It does not work to set the Extended-specific fields
      */
-    ExtendedIlluminaManifestRecord(final Map<String, Integer> columnNameToIndex, final String[] line, final int index) {
+    Build37ExtendedIlluminaManifestRecord(final Map<String, Integer> columnNameToIndex, final String[] line, final int index) {
         super(columnNameToIndex, line, index);
 
         final int end = line.length;
@@ -121,13 +121,13 @@ public class ExtendedIlluminaManifestRecord extends IlluminaManifestRecord {
 
     /**
      * This constructor is used to take a record from an Illumina Manifest and sets the Extended-specific fields
-     * in preparation for writing out the ExtendedIlluminaManifestRecord to file (or otherwise using it)
+     * in preparation for writing out the Build37ExtendedIlluminaManifestRecord to file (or otherwise using it)
      */
-    ExtendedIlluminaManifestRecord(final IlluminaManifestRecord record,
-                                   final Map<String, ReferenceSequenceFile> referenceFilesMap,
-                                   final Map<String, File> chainFilesMap,
-                                   final boolean dupe,
-                                   final String passedRsId) {
+    Build37ExtendedIlluminaManifestRecord(final IlluminaManifestRecord record,
+                                          final Map<String, ReferenceSequenceFile> referenceFilesMap,
+                                          final Map<String, File> chainFilesMap,
+                                          final boolean dupe,
+                                          final String passedRsId) {
         super(record);
 
         validate(record, dupe);
@@ -211,7 +211,7 @@ public class ExtendedIlluminaManifestRecord extends IlluminaManifestRecord {
             flag = Flag.ILLUMINA_FLAGGED;
         }
 
-        if (!r.getMajorGenomeBuild().trim().equals(build36) && !r.getMajorGenomeBuild().trim().equals(build37)) {
+        if (!r.getMajorGenomeBuild().trim().equals(BUILD_36) && !r.getMajorGenomeBuild().trim().equals(BUILD_37)) {
             flag = Flag.UNSUPPORTED_GENOME_BUILD;
         }
     }
@@ -222,7 +222,7 @@ public class ExtendedIlluminaManifestRecord extends IlluminaManifestRecord {
     private void liftOverToBuild37(final IlluminaManifestRecord r, final Map<String, File> chainFilesMap) {
 
         // no liftover needed
-        if (r.getMajorGenomeBuild().trim().equals(build37)) {
+        if (r.getMajorGenomeBuild().trim().equals(BUILD_37)) {
             b37Chr = r.getChr();
             b37Pos = r.getPosition();
 
@@ -242,7 +242,7 @@ public class ExtendedIlluminaManifestRecord extends IlluminaManifestRecord {
                 log.info("New chr, pos: " + b37Chr + ":" + b37Pos);
             } else {
                 flag = Flag.LIFTOVER_FAILED;
-                log.warn("Could not perform liftover from build " + r.getGenomeBuild() + " " + r.getChr() + ":" + r.getPosition() + " to build37.");
+                log.warn("Could not perform liftover from build " + r.getGenomeBuild() + " " + r.getChr() + ":" + r.getPosition() + " to build 37.");
             }
         }
     }

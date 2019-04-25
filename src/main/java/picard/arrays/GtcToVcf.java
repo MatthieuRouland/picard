@@ -25,8 +25,8 @@
 package picard.arrays;
 
 import picard.arrays.illumina.ArraysControlInfo;
-import picard.arrays.illumina.ExtendedIlluminaManifest;
-import picard.arrays.illumina.ExtendedIlluminaManifestRecord;
+import picard.arrays.illumina.Build37ExtendedIlluminaManifest;
+import picard.arrays.illumina.Build37ExtendedIlluminaManifestRecord;
 import picard.arrays.illumina.IlluminaManifestRecord;
 import picard.arrays.illumina.InfiniumEGTFile;
 import picard.arrays.illumina.InfiniumGTCFile;
@@ -178,7 +178,7 @@ public class GtcToVcf extends CommandLineProgram {
 
     @Override
     protected int doWork() {
-        final ExtendedIlluminaManifest manifest = setupAndGetManifest();
+        final Build37ExtendedIlluminaManifest manifest = setupAndGetManifest();
 
         try (final ReferenceSequenceFile refSeq = ReferenceSequenceFileFactory.getReferenceSequenceFile(REFERENCE_SEQUENCE)) {
 
@@ -223,14 +223,14 @@ public class GtcToVcf extends CommandLineProgram {
         return super.customCommandLineValidation();
     }
 
-    private ExtendedIlluminaManifest setupAndGetManifest() {
+    private Build37ExtendedIlluminaManifest setupAndGetManifest() {
         fingerprintGender = getFingerprintSex(FINGERPRINT_GENOTYPES_VCF_FILE);
         final InfiniumNormalizationManifest infiniumNormalizationManifest = new InfiniumNormalizationManifest(ILLUMINA_NORMALIZATION_MANIFEST);
         try (final DataInputStream gtcInputStream = new DataInputStream(new FileInputStream(INPUT))) {
 
             infiniumEGTFile = new InfiniumEGTFile(CLUSTER_FILE);
             infiniumGTCFile = new InfiniumGTCFile(gtcInputStream, infiniumNormalizationManifest);
-            final ExtendedIlluminaManifest manifest = new ExtendedIlluminaManifest(EXTENDED_ILLUMINA_MANIFEST);
+            final Build37ExtendedIlluminaManifest manifest = new Build37ExtendedIlluminaManifest(EXTENDED_ILLUMINA_MANIFEST);
 
             if (GENDER_GTC != null) {
                 try (DataInputStream genderGtcStream = new DataInputStream(new FileInputStream(GENDER_GTC))) {
@@ -273,16 +273,16 @@ public class GtcToVcf extends CommandLineProgram {
     }
 
     private void fillContexts(final SortingCollection<VariantContext> contexts, final InfiniumGTCFile gtcFile,
-                              final ExtendedIlluminaManifest manifest, final InfiniumEGTFile egtFile) {
+                              final Build37ExtendedIlluminaManifest manifest, final InfiniumEGTFile egtFile) {
         final ProgressLogger progressLogger = new ProgressLogger(log, 100000, "sorted");
 
-        final Iterator<ExtendedIlluminaManifestRecord> iterator = manifest.extendedIterator();
+        final Iterator<Build37ExtendedIlluminaManifestRecord> iterator = manifest.extendedIterator();
         int gtcIndex = 0;
 
         int numVariantsWritten = 0;
 
         while (iterator.hasNext()) {
-            final ExtendedIlluminaManifestRecord record = iterator.next();
+            final Build37ExtendedIlluminaManifestRecord record = iterator.next();
 
             if (!record.isBad()) {
                 InfiniumGTCRecord gtcRecord = gtcFile.getRecord(gtcIndex);
@@ -298,7 +298,7 @@ public class GtcToVcf extends CommandLineProgram {
         log.info(manifest.getNumAssays() + " Variants on the " + manifest.getDescriptorFileName() + " genotyping array manifest file");
     }
 
-    protected VariantContext makeVariantContext(ExtendedIlluminaManifestRecord record, final InfiniumGTCRecord gtcRecord,
+    protected VariantContext makeVariantContext(Build37ExtendedIlluminaManifestRecord record, final InfiniumGTCRecord gtcRecord,
                                                 final InfiniumEGTFile egtFile, final ProgressLogger progressLogger) {
         // If the record is not flagged as errant in the manifest we include it in the VCF
         Allele A = record.getAlleleA();
@@ -528,7 +528,7 @@ public class GtcToVcf extends CommandLineProgram {
         }
     }
 
-    private VCFHeader createVCFHeader(final ExtendedIlluminaManifest manifest,
+    private VCFHeader createVCFHeader(final Build37ExtendedIlluminaManifest manifest,
                                       final InfiniumGTCFile gtcFile,
                                       final String gtcGender,
                                       final File clusterFile,

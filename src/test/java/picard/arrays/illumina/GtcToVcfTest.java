@@ -37,13 +37,13 @@ public class GtcToVcfTest {
     @Test
     public void testGetGenotype() throws IOException {
         GtcToVcf gtcToVcf = new GtcToVcf();
-        final ExtendedIlluminaManifest manifest = new ExtendedIlluminaManifest(TEST_EXTENDED_MANIFEST_FILE);
+        final Build37ExtendedIlluminaManifest manifest = new Build37ExtendedIlluminaManifest(TEST_EXTENDED_MANIFEST_FILE);
         final List<InfiniumGTCRecord> infiniumGTCRecords = loadInfiniumGTCRecords();
 
-        final Iterator<ExtendedIlluminaManifestRecord> iterator = manifest.extendedIterator();
+        final Iterator<Build37ExtendedIlluminaManifestRecord> iterator = manifest.extendedIterator();
         int gtcIndex = 0;
         while (iterator.hasNext()) {
-            final ExtendedIlluminaManifestRecord record = iterator.next();
+            final Build37ExtendedIlluminaManifestRecord record = iterator.next();
             final InfiniumGTCRecord infiniumGtcRecord = infiniumGTCRecords.get(gtcIndex++);
             Allele A = record.getAlleleA();
             Allele B = record.getAlleleB();
