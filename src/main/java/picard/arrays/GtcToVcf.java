@@ -308,19 +308,6 @@ public class GtcToVcf extends CommandLineProgram {
         Allele B = record.getAlleleB();
         Allele ref = record.getRefAllele();
 
-        //if A, B and ref are all . then parse the alleles from the probeSeq
-        if (A.isNoCall() && B.isNoCall() && ref.isNoCall()) {
-            final String sourceSeq = record.getSourceSeq();
-            final String alleles = sourceSeq.substring(sourceSeq.indexOf('['), sourceSeq.lastIndexOf(']') + 1);
-            if (alleles.charAt(1) == '-') {
-                A = Allele.SPAN_DEL;
-                B = ref = Allele.create(alleles.substring(alleles.indexOf("/") + 1, alleles.lastIndexOf(']')), true);
-            } else {
-                A = ref = Allele.create(alleles.substring(alleles.indexOf("[") + 1, alleles.lastIndexOf('/')), true);
-                B = Allele.create(alleles.substring(alleles.indexOf("/") + 1, alleles.lastIndexOf(']')));
-            }
-        }
-
         final String chr = record.getB37Chr();
         final Integer position = record.getB37Pos();
         final Integer endPosition = position + ref.length() - 1;
@@ -334,6 +321,10 @@ public class GtcToVcf extends CommandLineProgram {
         // Create list of unique alleles
         final List<Allele> assayAlleles = new ArrayList<>();
         assayAlleles.add(ref);
+
+        if (A.equals(B)) {
+            throw new PicardException("Found same allele (" + A.getDisplayString() + ") for A and B ");
+        }
 
         if (!ref.equals(A, true)) {
             assayAlleles.add(A);
@@ -433,8 +424,8 @@ public class GtcToVcf extends CommandLineProgram {
         final double rOverX = (1 + Math.tan(normalizedTheta));
 
         //calculate X and Y variances from R and Theta variances
-        final double thetaVarianceFactorX = -1 * (halfPi * r) * Math.pow((1 + Math.tan(normalizedTheta))  * Math.cos(normalizedTheta), -2);
-        final double rVarianceFactorX = 1 / (1 + Math.tan(normalizedTheta));
+        final double thetaVarianceFactorX = -1 * (halfPi * r) * Math.pow(rOverX  * Math.cos(normalizedTheta), -2);
+        final double rVarianceFactorX = 1 / rOverX;
         final double varianceX = (Math.pow(thetaVarianceFactorX, 2) * thetaVariance) + (Math.pow(rVarianceFactorX, 2) * rVariance);
         final double thetaVarianceFactorY = -1 * thetaVarianceFactorX;
         final double rVarianceFactorY = 1 - rVarianceFactorX;
@@ -542,7 +533,7 @@ public class GtcToVcf extends CommandLineProgram {
 
         final Set<VCFHeaderLine> lines = new LinkedHashSet<>();
         lines.add(new VCFHeaderLine("fileDate", new Date().toString()));
-        lines.add(new VCFHeaderLine("source", "BPM file"));
+        lines.add(new VCFHeaderLine("source", "GtcToVcf"));
         final String descriptorFileName = manifest.getDescriptorFileName();
         lines.add(new VCFHeaderLine(InfiniumVcfFields.ARRAY_TYPE, descriptorFileName.substring(0, descriptorFileName.lastIndexOf(DOT))));
         lines.add(new VCFHeaderLine(InfiniumVcfFields.EXTENDED_ILLUMINA_MANIFEST_FILE, EXTENDED_ILLUMINA_MANIFEST.getName()));

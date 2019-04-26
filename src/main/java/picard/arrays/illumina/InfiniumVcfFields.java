@@ -43,7 +43,6 @@ public class InfiniumVcfFields {
     public static final String ANALYSIS_VERSION_NUMBER = "analysisVersionNumber";
     public static final String SAMPLE_ALIAS = "sampleAlias";
 
-    public static final String GENOME_BUILD = "genomeBuild";
     public static final String EXPECTED_GENDER = "expectedGender";
     public static final String FINGERPRINT_GENDER = "fingerprintGender";
     public static final String AUTOCALL_GENDER = "autocallGender";

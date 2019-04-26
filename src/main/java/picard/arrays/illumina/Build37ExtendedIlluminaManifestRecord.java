@@ -388,7 +388,7 @@ public class Build37ExtendedIlluminaManifestRecord extends IlluminaManifestRecor
     }
 
     private boolean validateAlleleABBases(String allele1, String allele2) {
-        return ((isAorT(allele1) && isCorG(allele2)) || (isCorG(allele1) && isAorT(allele2)));
+        return SequenceUtil.readBaseMatchesRefBaseWithAmbiguity(allele1.getBytes()[0], allele2.getBytes()[0]);
     }
 
     private boolean isAorT(String allele) {
