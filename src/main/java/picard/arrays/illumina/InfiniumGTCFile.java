@@ -415,18 +415,18 @@ public class InfiniumGTCFile extends InfiniumDataFile {
 
         for (byte genotypeByte : genotypeBytes) {
             switch (genotypeByte) {
-                case 0: {
+                case NO_CALL: {
                     break;
                 }
-                case 1: {
+                case AA_CALL: {
                     aaCalls++;
                     break;
                 }
-                case 2: {
+                case AB_CALL: {
                     abCalls++;
                     break;
                 }
-                case 3: {
+                case BB_CALL: {
                     bbCalls++;
                     break;
                 }

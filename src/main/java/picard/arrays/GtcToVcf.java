@@ -420,6 +420,8 @@ public class GtcToVcf extends CommandLineProgram {
         final double rVariance = Math.pow(rDeviation, 2.0);
 
         final double halfPi = Math.PI / 2;
+        // Note that normalizedTheta= is a normal angle measured in radians,
+        // while theta has been divided by pi/2 so that it goes from 0 to 1 as normalizedTheta goes from 0 to pi/2
         final double normalizedTheta = halfPi * theta;
         final double rOverX = (1 + Math.tan(normalizedTheta));
 
