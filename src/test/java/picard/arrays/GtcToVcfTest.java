@@ -1,4 +1,4 @@
-package picard.arrays.illumina;
+package picard.arrays;
 
 import htsjdk.samtools.util.IOUtil;
 import htsjdk.variant.variantcontext.Allele;
@@ -6,7 +6,11 @@ import htsjdk.variant.variantcontext.Genotype;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 import picard.PicardException;
-import picard.arrays.GtcToVcf;
+import picard.arrays.illumina.Build37ExtendedIlluminaManifest;
+import picard.arrays.illumina.Build37ExtendedIlluminaManifestRecord;
+import picard.arrays.illumina.InfiniumGTCFile;
+import picard.arrays.illumina.InfiniumGTCRecord;
+import picard.arrays.illumina.InfiniumVcfFields;
 
 import java.io.File;
 import java.io.FileNotFoundException;

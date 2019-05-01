@@ -31,6 +31,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.LineNumberReader;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -46,6 +48,19 @@ public class InfiniumNormalizationManifest {
     private byte[] chromosomes;
     private int[] normIds;
     private Integer[] allNormIds;
+
+    private static final Map<String, Byte> CHROM_TO_BYTE = new HashMap<>();
+
+    static {
+        for (int i = 1; i <= 22; i++) {
+            String chrom = Integer.toString(i);
+            CHROM_TO_BYTE.put(chrom, new Byte(chrom));
+        }
+        CHROM_TO_BYTE.put("X", new Byte("23"));
+        CHROM_TO_BYTE.put("XY", new Byte("23"));
+        CHROM_TO_BYTE.put("Y", new Byte("24"));
+        CHROM_TO_BYTE.put("MT", new Byte("25"));
+    }
 
     public InfiniumNormalizationManifest(File illuminaNormalizationManifest) {
         parse(illuminaNormalizationManifest);
@@ -75,13 +90,12 @@ public class InfiniumNormalizationManifest {
                     allNormIdSet.add(new Integer(tokens[8].trim()));
                     normIds[count] = new Integer(tokens[8].trim());
                     String chrom = tokens[2].trim();
-                    Byte chromByte = convertChromosomeToByte(chrom);
+                    Byte chromByte = CHROM_TO_BYTE.get(chrom);
                     chromosomes[count] = chromByte;
                     positions[count] = new Long(tokens[3].trim());
                     count++;
                 }
                 allNormIds = allNormIdSet.toArray(new Integer[allNormIdSet.size()]);
-                reader.close();
             }
         } catch (IOException e) {
             throw new PicardException("Error parsing Infinium normalization manifest", e);
@@ -100,34 +114,8 @@ public class InfiniumNormalizationManifest {
         return chromosomes;
     }
 
-    public void setChromosomes(byte[] chromosomes) {
-        this.chromosomes = chromosomes;
-    }
-
     public long[] getPositions() {
         return positions;
-    }
-
-    public void setPositions(long[] positions) {
-        this.positions = positions;
-    }
-
-    private Byte convertChromosomeToByte(String chrom) {
-        switch (chrom) {
-            case "X":
-                chrom = "23";
-                break;
-            case "Y":
-                chrom = "24";
-                break;
-            case "XY":
-                chrom = "23";
-                break;
-            case "MT":
-                chrom = "25";
-                break;
-        }
-        return new Byte(chrom);
     }
 }
 

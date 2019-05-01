@@ -29,7 +29,7 @@ public class InfiniumGTCRecord {
         this.logRRatio = logRRatio;
     }
 
-    InfiniumGTCRecord(final String csvString) {
+    public InfiniumGTCRecord(final String csvString) {
         String[] components = csvString.split(",");
         this.rawXIntensity = Integer.parseInt(components[0]);
         this.rawYIntensity = Integer.parseInt(components[1]);
