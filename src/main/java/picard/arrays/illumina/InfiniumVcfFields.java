@@ -52,8 +52,6 @@ public class InfiniumVcfFields {
     public static final String MANIFEST_FILE = "manifestFile";
     public static final String EXTENDED_ILLUMINA_MANIFEST_FILE = "extendedManifestFile";
     public static final String AUTOCALL_VERSION = "autocallVersion";
-    public static final String ZCALL_VERSION = "zcallVersion";
-    public static final String ZCALL_THRESHOLDS = "zcallThresholds";
     public static final String P_95_RED = "p95Red";
     public static final String P_95_GREEN = "p95Green";
     public static final String SCANNER_NAME = "scannerName";
@@ -92,8 +90,6 @@ public class InfiniumVcfFields {
     public static final String[] DEV_X = new String[GENOTYPE_VALUES.values().length];
     public static final String[] MEAN_Y = new String[GENOTYPE_VALUES.values().length];
     public static final String[] DEV_Y = new String[GENOTYPE_VALUES.values().length];
-    public static final String ZTHRESH_X = "zthresh_X";
-    public static final String ZTHRESH_Y = "zthresh_Y";
     public static final String RS_ID = "refSNP";
 
     static {
@@ -114,13 +110,12 @@ public class InfiniumVcfFields {
     public static final String TRIALLELIC = "TRIALLELIC";
     public static final String DUPE = "DUPE";
     public static final String FAIL_REF = "FAIL_REF";
-    public static final String ZCALL_DIFF = "ZCALL_DIFF";
     public static final String ZEROED_OUT_ASSAY = "ZEROED_OUT_ASSAY";
 
     public static enum GENOTYPE_VALUES {AA, AB, BB}
 
 
-    public static String  getValueFromVcfOtherHeaderLine(final VCFHeader vcfHeader, final String keyName) {
+    public static String getValueFromVcfOtherHeaderLine(final VCFHeader vcfHeader, final String keyName) {
         VCFHeaderLine otherHeaderLine = vcfHeader.getOtherHeaderLine(keyName);
         if (otherHeaderLine != null) {
             return otherHeaderLine.getValue();
