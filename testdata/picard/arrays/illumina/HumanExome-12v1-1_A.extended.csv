@@ -11,7 +11,7 @@ dbSNP File,/seq/references/Homo_sapiens_assembly19/v1/variant_calling/vqsr_resou
 Supported Build,36
 Supported Reference File,/seq/references/Homo_sapiens_assembly19/v1/arrays/human_b36_both.fasta
 Supported Chain File,/seq/references/Homo_sapiens_assembly19/v1/arrays/b36ToHg19.broad.over.chain
-Loci Count ,242901
+Loci Count ,4
 [Assay],
 IlmnID,Name,IlmnStrand,SNP,AddressA_ID,AlleleA_ProbeSeq,AddressB_ID,AlleleB_ProbeSeq,GenomeBuild,Chr,MapInfo,Ploidy,Species,Source,SourceVersion,SourceStrand,SourceSeq,TopGenomicSeq,BeadSetID,Exp_Clusters,RefStrand,build37Chr,build37Pos,build37RefAllele,build37AlleleA,build37AlleleB,build37Rsid,build37Flag
 exm-rs1000026-131_T_F_1990486741,exm-rs1000026,TOP,[A/G],81790917,TAAGTCAAAGGAAAACAAGTCAATAAATCCACTATCTATGGCTCCAAGGA,,,37.1,21,38934599,diploid,Homo sapiens,dbSNP,131,TOP,GAAAGAGCCATAAGTCAAAGGAAAACAAGTCAATAAATCCACTATCTATGGCTCCAAGGA[A/G]TAGAGGAAGCACCCAAAGTGATATTATTGTGAAACATTATTATTAATATGGGAAAGCCGC,GAAAGAGCCATAAGTCAAAGGAAAACAAGTCAATAAATCCACTATCTATGGCTCCAAGGA[A/G]TAGAGGAAGCACCCAAAGTGATATTATTGTGAAACATTATTATTAATATGGGAAAGCCGC,662,3,-,21,38934599,C,T,C,rs1000026,PASS

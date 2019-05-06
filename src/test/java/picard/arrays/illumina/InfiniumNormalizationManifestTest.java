@@ -11,8 +11,8 @@ import java.util.TreeSet;
 
 public class InfiniumNormalizationManifestTest {
     private static final File TEST_DATA_DIR = new File("testdata/picard/arrays/illumina");
-    private static final File TEST_NORMALIZATION_MANIFEST_FILE = new File(TEST_DATA_DIR, "Test.bpm.csv");
-    private static final File TEST_BAD_NORMALIZATION_MANIFEST_FILE = new File(TEST_DATA_DIR, "Test.extended.csv");
+    private static final File TEST_NORMALIZATION_MANIFEST_FILE = new File(TEST_DATA_DIR, "HumanExome-12v1-1_A.bpm.csv");
+    private static final File TEST_BAD_NORMALIZATION_MANIFEST_FILE = new File(TEST_DATA_DIR, "HumanExome-12v1-1_A.extended.csv");
 
     @Test
     public void testInfiniumNormalizationManifest() {

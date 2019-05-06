@@ -24,7 +24,7 @@ import java.util.Set;
 
 public class GtcToVcfTest {
     private static final File TEST_DATA_DIR = new File("testdata/picard/arrays/illumina");
-    private static final File TEST_EXTENDED_MANIFEST_FILE = new File(TEST_DATA_DIR, "Test.extended.csv");
+    private static final File TEST_EXTENDED_MANIFEST_FILE = new File(TEST_DATA_DIR, "HumanExome-12v1-1_A.bpm.csv");
     private static final File TEST_GTC_RECORDS_FILE = new File(TEST_DATA_DIR, "Test.gtc_records.csv");
 
     private static final List<String> INFINIUM_VCF_FORMAT_FIELDS = Arrays.asList(
