@@ -11,6 +11,7 @@ import picard.arrays.illumina.Build37ExtendedIlluminaManifestRecord;
 import picard.arrays.illumina.InfiniumGTCFile;
 import picard.arrays.illumina.InfiniumGTCRecord;
 import picard.arrays.illumina.InfiniumVcfFields;
+import picard.pedigree.Sex;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -24,8 +25,9 @@ import java.util.Set;
 
 public class GtcToVcfTest {
     private static final File TEST_DATA_DIR = new File("testdata/picard/arrays/illumina");
-    private static final File TEST_EXTENDED_MANIFEST_FILE = new File(TEST_DATA_DIR, "HumanExome-12v1-1_A.bpm.csv");
+    private static final File TEST_EXTENDED_MANIFEST_FILE = new File(TEST_DATA_DIR, "HumanExome-12v1-1_A.extended.csv");
     private static final File TEST_GTC_RECORDS_FILE = new File(TEST_DATA_DIR, "Test.gtc_records.csv");
+    private static final File TEST_FINGERPRINT_GENOTYPES_FILE = new File(TEST_DATA_DIR, "Test.fingerprint.vcf");
 
     private static final List<String> INFINIUM_VCF_FORMAT_FIELDS = Arrays.asList(
             InfiniumVcfFields.X,
@@ -88,6 +90,12 @@ public class GtcToVcfTest {
             foundKeys.removeAll(INFINIUM_VCF_FORMAT_FIELDS);
             Assert.assertTrue(foundKeys.isEmpty(), "Found extra attributes in FORMAT field of VCF");
         }
+    }
+
+    @Test
+    public void testGetFingerprintSex() {
+        Assert.assertEquals(GtcToVcf.getFingerprintSex(TEST_FINGERPRINT_GENOTYPES_FILE), Sex.Female);
+        Assert.assertEquals(GtcToVcf.getFingerprintSex(null), Sex.Unknown);
     }
 
     private List<InfiniumGTCRecord> loadInfiniumGTCRecords() throws FileNotFoundException {

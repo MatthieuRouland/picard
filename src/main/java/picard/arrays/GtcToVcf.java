@@ -259,7 +259,7 @@ public class GtcToVcf extends CommandLineProgram {
         }
     }
 
-    private Sex getFingerprintSex(final File file) {
+    static Sex getFingerprintSex(final File file) {
         if (file == null) {
             return Sex.Unknown;
         } else {
