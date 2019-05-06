@@ -414,7 +414,7 @@ public class GtcToVcf extends CommandLineProgram {
     }
 
     //Uses Manhattan distance conversion
-    private EuclideanValues polarToEuclidean(float r, float rDeviation, float theta, float thetaDeviation) {
+    EuclideanValues polarToEuclidean(float r, float rDeviation, float theta, float thetaDeviation) {
         //calculate variance (deviation^2)
         final double thetaVariance = Math.pow(thetaDeviation, 2.0);
         final double rVariance = Math.pow(rDeviation, 2.0);
@@ -448,8 +448,8 @@ public class GtcToVcf extends CommandLineProgram {
         return new EuclideanValues((float) meanX, (float) meanY, (float) devX, (float) devY);
     }
 
-    private class EuclideanValues {
-        private final float meanX, meanY, devX, devY;
+    class EuclideanValues {
+        final float meanX, meanY, devX, devY;
 
         EuclideanValues(float meanX, float meanY, float devX, float devY) {
             this.meanX = meanX;

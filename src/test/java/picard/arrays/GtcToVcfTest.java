@@ -4,6 +4,7 @@ import htsjdk.samtools.util.IOUtil;
 import htsjdk.variant.variantcontext.Allele;
 import htsjdk.variant.variantcontext.Genotype;
 import org.testng.Assert;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import picard.PicardException;
 import picard.arrays.illumina.Build37ExtendedIlluminaManifest;
@@ -96,6 +97,25 @@ public class GtcToVcfTest {
     public void testGetFingerprintSex() {
         Assert.assertEquals(GtcToVcf.getFingerprintSex(TEST_FINGERPRINT_GENOTYPES_FILE), Sex.Female);
         Assert.assertEquals(GtcToVcf.getFingerprintSex(null), Sex.Unknown);
+    }
+
+    @Test(dataProvider = "polarToEuclideanDataProvider")
+    public void testPolarToEuclidean(float r, float rDeviation, float theta, float thetaDeviation, float expectedMeanX, float expectedMeanY, float expectedDevX, float expectedDevY) {
+        GtcToVcf gtcToVcf = new GtcToVcf();
+        GtcToVcf.EuclideanValues euclideanValues = gtcToVcf.polarToEuclidean(r, rDeviation, theta, thetaDeviation);
+        Assert.assertEquals(euclideanValues.meanX, expectedMeanX);
+        Assert.assertEquals(euclideanValues.meanY, expectedMeanY);
+        Assert.assertEquals(euclideanValues.devX, expectedDevX);
+        Assert.assertEquals(euclideanValues.devY, expectedDevY);
+    }
+
+    @DataProvider(name = "polarToEuclideanDataProvider")
+    public Object[][] badData() {
+        return new Object[][]{
+                { 0.9228464f, 0.1f, 0.13941205f, 0.04408725f, 0.7548494f, 0.167997f, 0.093297675f, 0.048428293f },
+                { 0.7268211f, 0.1f, 0.5568851f, 0.02236068f, 0.33085135f, 0.39596978f, 0.047303885f, 0.055978503f },
+                { 0.3930402f, 0.1f, 0.9743582f, 0.010385988f, 0.0152258575f, 0.37781435f, 0.007087064f, 0.096309155f }
+        };
     }
 
     private List<InfiniumGTCRecord> loadInfiniumGTCRecords() throws FileNotFoundException {
